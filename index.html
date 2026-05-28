@@ -209,6 +209,9 @@
   </div>
 </div>
 
+<!-- Persistent chapter index — desktop only, shows once past TOC -->
+<nav class="chapter-index" id="chapterIndex" aria-label="Chapters" hidden></nav>
+
 <!-- Book navigation -->
 <div class="book-nav">
   <button class="nav-arrow" id="navPrev" aria-label="Previous page">
@@ -363,13 +366,15 @@
     <div class="page-content flow">
       <span class="chapter-eyebrow">What to wear</span>
       <h2 class="chapter-heading">A palette of<br><em>soft hues</em></h2>
-      <div class="palette">
-        <div class="swatch" style="background:#F2D9D0" data-name="Blush"></div>
-        <div class="swatch" style="background:#F5E6D3" data-name="Cream"></div>
-        <div class="swatch" style="background:#C9D3C2" data-name="Sage"></div>
-        <div class="swatch" style="background:#D6E2E9" data-name="Sky"></div>
-        <div class="swatch" style="background:#E8D5C4" data-name="Beige"></div>
-        <div class="swatch" style="background:#D4C5D9" data-name="Lilac"></div>
+      <div class="palette-card">
+        <div class="palette">
+          <div class="swatch" style="background:#F2D9D0" data-name="Blush"></div>
+          <div class="swatch" style="background:#F5E6D3" data-name="Cream"></div>
+          <div class="swatch" style="background:#C9D3C2" data-name="Sage"></div>
+          <div class="swatch" style="background:#D6E2E9" data-name="Sky"></div>
+          <div class="swatch" style="background:#E8D5C4" data-name="Beige"></div>
+          <div class="swatch" style="background:#D4C5D9" data-name="Lilac"></div>
+        </div>
       </div>
       <p class="dress-note">
         Please join us in soft pastel and neutral tones —
@@ -661,8 +666,6 @@
               <option value="0">None</option>
               <option value="1">1 child</option>
               <option value="2">2 children</option>
-              <option value="3">3 children</option>
-              <option value="4">4 children</option>
             </select>
           </div>
         </div>

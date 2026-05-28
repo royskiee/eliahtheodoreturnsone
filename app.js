@@ -8,7 +8,7 @@
   // The Sheet behind this endpoint is the source of truth for the
   // guest list. Deleting a row in the Sheet hides that guest on
   // the site (next page load).
-  const RSVP_ENDPOINT = 'PASTE_GAS_WEB_APP_URL_HERE';
+  const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzG1JcpbVq2iU5YvG9sfikKIp59ofp0-dKwwtdG6v7SWlLDu8N1ntGJ-TpVKZJH14-a/exec';
 
   // 10 spreads total: 0 = cover, 1-9 = content spreads
   const TOTAL_SPREADS = 10;
@@ -41,6 +41,7 @@
   const edgeLeft = document.getElementById('edgeLeft');
   const edgeRight = document.getElementById('edgeRight');
   const rightZone = document.querySelector('.leaves .right-zone');
+  const chapterIndex = document.getElementById('chapterIndex');
 
   // Get template by id
   function tpl(id){
@@ -540,7 +541,7 @@
       // Gain envelope to taper the overall sound
       const gain = ctx.createGain();
       gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.09, ctx.currentTime + 0.04);
       gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
 
       noise.connect(bandpass).connect(highshelf).connect(gain).connect(ctx.destination);
@@ -566,7 +567,7 @@
         osc.frequency.value = freq;
         const gain = ctx.createGain();
         gain.gain.setValueAtTime(0.0001, now + delay);
-        gain.gain.exponentialRampToValueAtTime(0.12, now + delay + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.05, now + delay + 0.02);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + delay + duration);
         osc.connect(gain).connect(ctx.destination);
         osc.start(now + delay);
@@ -588,7 +589,7 @@
       osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
       const gain = ctx.createGain();
       gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.05, now + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.02, now + 0.005);
       gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
       osc.connect(gain).connect(ctx.destination);
       osc.start(now);
@@ -604,7 +605,7 @@
   // ========================================================
 
   const bgMusic = document.getElementById('bgMusic');
-  if (bgMusic) bgMusic.volume = 0.55;
+  if (bgMusic) bgMusic.volume = 0.22;
 
   function startMusic(){
     if (!bgMusic) return;
@@ -1076,6 +1077,46 @@
     spreadIndicator.textContent = SPREAD_NAMES[spreadIdx] || `Page ${spreadIdx + 1}`;
     navPrev.disabled = (spreadIdx === 0);
     navNext.disabled = (spreadIdx === TOTAL_SPREADS - 1);
+    updateChapterIndex(spreadIdx);
+  }
+
+  // Chapter index — desktop-only persistent strip shown once past TOC (spread > 1).
+  const CHAPTER_ENTRIES = [
+    { idx: 2, label: 'Once',     num: 'I' },
+    { idx: 3, label: 'Details',  num: 'II' },
+    { idx: 4, label: 'Setting',  num: 'III' },
+    { idx: 5, label: 'Finding',  num: 'IV' },
+    { idx: 6, label: 'Feast',    num: 'V' },
+    { idx: 7, label: 'Guests',   num: 'VI' },
+    { idx: 8, label: 'RSVP',     num: 'VII' },
+    { idx: 9, label: 'End',      num: 'VIII' }
+  ];
+  function buildChapterIndex(){
+    if (!chapterIndex || chapterIndex.dataset.built) return;
+    chapterIndex.dataset.built = '1';
+    CHAPTER_ENTRIES.forEach(c => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.dataset.target = c.idx;
+      b.innerHTML = `<span class="ci-num">${c.num}</span>${c.label}`;
+      b.addEventListener('click', () => goTo(c.idx));
+      chapterIndex.appendChild(b);
+    });
+  }
+  function updateChapterIndex(spreadIdx){
+    if (!chapterIndex) return;
+    const shouldShow = !isMobile() && spreadIdx > 1;
+    if (shouldShow){
+      buildChapterIndex();
+      chapterIndex.hidden = false;
+      requestAnimationFrame(() => chapterIndex.classList.add('visible'));
+    } else {
+      chapterIndex.classList.remove('visible');
+      if (isMobile()) chapterIndex.hidden = true;
+    }
+    chapterIndex.querySelectorAll('button').forEach(btn => {
+      btn.classList.toggle('active', parseInt(btn.dataset.target, 10) === spreadIdx);
+    });
   }
   // Apply / remove the closed-book layout class — call this AFTER the flip animation
   function applyCoverLayout(spreadIdx){
@@ -1172,6 +1213,7 @@
     if (resizeRaf) cancelAnimationFrame(resizeRaf);
     resizeRaf = requestAnimationFrame(() => {
       if (currentSpread > 0 && !isFlipping) setBasePages(currentSpread);
+      updateChapterIndex(currentSpread);
     });
   });
 

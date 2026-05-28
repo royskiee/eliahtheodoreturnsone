@@ -601,17 +601,20 @@ body{
 }
 .cover-open-cue{
   position:absolute;
-  bottom:clamp(16px, 3vw, 30px);
+  bottom:clamp(22px, 4vw, 42px);
   right:clamp(40px, 6vw, 70px);
   font-family:'Fraunces', serif;
   font-style:italic;
-  font-size:.85rem;
-  color:rgba(187,201,217,.7);
+  font-size:clamp(1.05rem, 1.6vw, 1.35rem);
+  letter-spacing:.02em;
+  color:rgba(220,232,248,.92);
+  text-shadow:0 1px 4px rgba(0,0,0,.35);
   display:flex;
   align-items:center;
-  gap:8px;
+  gap:12px;
   animation:bob 2.4s ease-in-out infinite;
 }
+.cover-open-cue svg{width:22px;height:14px}
 @keyframes bob{
   0%,100%{transform:translateX(0)}
   50%{transform:translateX(4px)}
@@ -956,11 +959,18 @@ body{
 /* =========================================================
    DRESS CODE PAGE
    ========================================================= */
+.palette-card{
+  background:linear-gradient(135deg, rgba(242,217,176,.45), rgba(122,157,196,.18));
+  border:1px solid rgba(61,94,137,.18);
+  border-radius:14px;
+  padding:1.3rem 1rem 1.8rem;
+  margin:1.2rem 0 .6rem;
+  box-shadow:inset 0 0 24px rgba(187,201,217,.18);
+}
 .palette{
   display:flex;
   justify-content:center;
   gap:14px;
-  margin:1.2rem 0 .6rem;
   flex-wrap:wrap;
 }
 .swatch{
@@ -1686,6 +1696,71 @@ body{
   transition:all .3s;
 }
 .contact-link:hover{background:var(--cocoa);color:var(--cream)}
+
+/* =========================================================
+   CHAPTER INDEX — desktop persistent strip below the book
+   Appears once the reader passes the Table of Contents (spread > 1).
+   ========================================================= */
+.chapter-index{
+  position:fixed;
+  left:50%;
+  bottom:4.4rem;
+  transform:translateX(-50%);
+  z-index:39;
+  display:flex;
+  gap:.4rem;
+  flex-wrap:wrap;
+  justify-content:center;
+  max-width:min(95vw, 1100px);
+  padding:.45rem .75rem;
+  background:rgba(28,18,8,.55);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  border:1px solid rgba(255,220,160,.22);
+  border-radius:999px;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity .35s ease;
+}
+.chapter-index.visible{
+  opacity:1;
+  pointer-events:auto;
+}
+.chapter-index[hidden]{display:none}
+.chapter-index button{
+  background:transparent;
+  border:1px solid transparent;
+  color:rgba(251,243,228,.78);
+  font-family:'Fraunces', serif;
+  font-style:italic;
+  font-size:.78rem;
+  padding:.25rem .7rem;
+  border-radius:999px;
+  cursor:pointer;
+  white-space:nowrap;
+  transition:all .25s;
+}
+.chapter-index button:hover{
+  color:var(--cream);
+  background:rgba(122,157,196,.25);
+}
+.chapter-index button.active{
+  background:var(--honey);
+  border-color:rgba(255,220,160,.35);
+  color:var(--cream);
+}
+.chapter-index .ci-num{
+  font-size:.7em;
+  color:rgba(255,220,160,.65);
+  margin-right:.35em;
+  font-style:normal;
+  letter-spacing:.08em;
+}
+.chapter-index button.active .ci-num{color:rgba(255,235,200,.95)}
+@media (max-width: 640px){
+  .chapter-index{display:none !important}
+}
 
 /* =========================================================
    BOOK CONTROLS (navigation arrows + dots)
