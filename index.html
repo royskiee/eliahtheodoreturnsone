@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Inter:wght@300;400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
+<link rel="preload" as="image" href="assets/cover.jpg" fetchpriority="high">
+<link rel="preload" as="image" href="assets/once.jpg">
 <link rel="stylesheet" href="styles.css">
 
 </head>
@@ -23,22 +25,22 @@
   <svg viewBox="0 0 1400 500" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYEnd meet">
     <defs>
       <linearGradient id="castleFade" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#0E1626" stop-opacity="0.95"/>
-        <stop offset="100%" stop-color="#0E1626" stop-opacity="1"/>
+        <stop offset="0%" stop-color="#7A9DC4" stop-opacity="0.85"/>
+        <stop offset="100%" stop-color="#3D5E89" stop-opacity="0.95"/>
       </linearGradient>
     </defs>
     <!-- Rolling hills -->
-    <path d="M0 460 Q200 420 400 440 T800 430 T1200 445 T1400 440 L1400 500 L0 500 Z" fill="url(#castleFade)" opacity="0.6"/>
-    <path d="M0 480 Q300 460 600 470 T1200 475 T1400 472 L1400 500 L0 500 Z" fill="#0d0805" opacity="0.7"/>
+    <path d="M0 460 Q200 420 400 440 T800 430 T1200 445 T1400 440 L1400 500 L0 500 Z" fill="url(#castleFade)" opacity="0.55"/>
+    <path d="M0 480 Q300 460 600 470 T1200 475 T1400 472 L1400 500 L0 500 Z" fill="#3D5E89" opacity="0.55"/>
     <!-- Trees on the sides -->
-    <g fill="#0E1626" opacity="0.85">
+    <g fill="#4E74A3" opacity="0.7">
       <path d="M80 460 L80 380 Q70 360 90 350 Q95 320 110 340 Q130 320 130 360 Q145 370 130 390 Z"/>
       <path d="M180 465 L180 390 Q170 370 190 360 Q200 340 215 360 Q235 350 235 380 Q250 395 230 410 Z"/>
       <path d="M1180 460 L1180 380 Q1170 365 1190 355 Q1200 330 1215 350 Q1240 335 1240 370 Q1255 385 1235 405 Z"/>
       <path d="M1290 465 L1290 395 Q1280 380 1295 370 Q1305 350 1320 370 Q1340 365 1340 395 Q1350 410 1330 420 Z"/>
     </g>
     <!-- Main castle body -->
-    <g fill="#0a0604">
+    <g fill="#3D5E89">
       <!-- Base walls -->
       <rect x="580" y="280" width="240" height="180"/>
       <!-- Side wings -->
@@ -77,7 +79,7 @@
       <path d="M858 240 L874 195 L890 240 Z"/>
 
       <!-- Front gate -->
-      <path d="M685 380 L685 460 L715 460 L715 380 Q700 365 685 380 Z" fill="#0E1626"/>
+      <path d="M685 380 L685 460 L715 460 L715 380 Q700 365 685 380 Z" fill="#2A3A5E"/>
 
       <!-- Window slits (warm glow hints) -->
     </g>
@@ -269,7 +271,7 @@
   <template id="tpl-spread-1-right">
     <div class="page-content stretch">
       <div class="story-photo">
-        <img src="assets/cover.jpg" alt="Elijah" />
+        <img src="assets/cover.jpg" alt="Elijah" loading="eager" decoding="sync" fetchpriority="high" />
       </div>
       <div class="page-number right">iii</div>
     </div>

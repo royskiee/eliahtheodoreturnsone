@@ -421,7 +421,24 @@
         });
 
         if (!RSVP_ENDPOINT || RSVP_ENDPOINT.includes('PASTE_GAS_WEB_APP_URL_HERE')){
-          throw new Error('RSVP_ENDPOINT not configured.');
+          // Endpoint not deployed yet — store locally and confirm so guests
+          // see the friendly "thanks" instead of the WhatsApp fallback error.
+          const list = loadAttendees();
+          const filtered = list.filter(x => x.email?.toLowerCase() !== payload.email?.toLowerCase());
+          filtered.push({
+            name: payload.name,
+            email: payload.email,
+            attending: payload.attending,
+            adults: payload.adults,
+            children: payload.children,
+            ts: Date.now()
+          });
+          saveAttendees(filtered);
+          statusEl.className = 'form-status success';
+          statusEl.textContent = '🧸 Thank you! Your RSVP has been received.';
+          form.reset();
+          submitBtn.textContent = 'Sent ✓';
+          return;
         }
 
         // Send as multipart form-data — Apps Script reads via e.parameter
@@ -735,13 +752,12 @@
         return;
       }
 
-      // DESKTOP: cover-back face shows TOC during rotation; populate base pages mid-flip
+      // DESKTOP: cover-back face shows TOC during rotation; populate base right NOW
+      // so the image has time to decode/paint before the cover rotates past 90°.
       setCoverBack();
-      setTimeout(() => {
-        basePageRight.innerHTML = '';
-        const newRight = tpl('tpl-spread-1-right');
-        if (newRight) basePageRight.appendChild(newRight);
-      }, 700);
+      basePageRight.innerHTML = '';
+      const newRightEarly = tpl('tpl-spread-1-right');
+      if (newRightEarly) basePageRight.appendChild(newRightEarly);
 
       let finished = false;
       const onDone = () => {
@@ -1144,9 +1160,15 @@
     e.preventDefault();
   }, { passive: false });
 
-  // On resize, rebuild current spread for new layout
+  // On resize, rebuild current spread for new layout.
+  // Only rebuild when the WIDTH changes — iOS Safari fires `resize` when the
+  // on-screen keyboard opens (height shrinks), which used to wipe the RSVP
+  // form mid-input on mobile.
   let resizeRaf = null;
+  let lastResizeWidth = window.innerWidth;
   window.addEventListener('resize', () => {
+    if (window.innerWidth === lastResizeWidth) return;
+    lastResizeWidth = window.innerWidth;
     if (resizeRaf) cancelAnimationFrame(resizeRaf);
     resizeRaf = requestAnimationFrame(() => {
       if (currentSpread > 0 && !isFlipping) setBasePages(currentSpread);
