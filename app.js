@@ -171,16 +171,19 @@
   }
 
   // ====== Attendees ======
-  // Source of truth = the Google Sheet (via Apps Script Web App).
-  // localStorage is used only as a short-lived cache so the list
-  // shows instantly while the network fetch is in flight.
-  const STORAGE_KEY = 'elijah_attendees_v4';
-  function loadAttendees(){
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-    catch(e){ return []; }
+  // Google Sheet is the only source of truth. No localStorage cache —
+  // deletions in the Sheet must reflect on the site immediately.
+  const SESSION_SUBMIT_KEY = 'elijah_rsvp_submitted';
+  let attendeesCache = []; // in-memory only, populated by fetchAttendees
+  function hasSubmittedThisSession(){
+    try { return sessionStorage.getItem(SESSION_SUBMIT_KEY) === '1'; }
+    catch(e){ return false; }
   }
-  function saveAttendees(list){
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch(e){}
+  function markSubmittedThisSession(){
+    try { sessionStorage.setItem(SESSION_SUBMIT_KEY, '1'); } catch(e){}
+  }
+  function normalizeName(s){
+    return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
   }
   // Apps Script /exec redirects to script.googleusercontent.com which strips the
   // CORS headers — a plain `fetch()` GET fails in the browser. JSONP via a
@@ -260,13 +263,12 @@
     const sg = document.getElementById('statGuests'); if (sg) sg.textContent = totalGuests;
   }
   async function renderAttendees(){
-    // Paint instantly from cache so the page isn't empty mid-fetch.
-    paintAttendees(loadAttendees());
     const fresh = await fetchAttendees();
     if (fresh){
-      // Sheet wins — overwrite cache so deletions in the Sheet are reflected.
-      saveAttendees(fresh);
+      attendeesCache = fresh;
       paintAttendees(fresh);
+    } else {
+      paintAttendees(attendeesCache);
     }
   }
 
@@ -416,10 +418,30 @@
     // Apply any URL-based invite-type locks (solo/couple/family)
     applyInviteType(form);
 
+    // If this browser already submitted in this session, lock the form immediately.
+    if (hasSubmittedThisSession()){
+      const submitBtn = document.getElementById('submitBtn');
+      const statusEl = document.getElementById('formStatus');
+      if (submitBtn){ submitBtn.disabled = true; submitBtn.textContent = 'Already sent ✓'; }
+      if (statusEl){
+        statusEl.className = 'form-status success';
+        statusEl.textContent = '🧸 You\'ve already RSVP\'d in this session. Refresh tomorrow to update.';
+      }
+    }
+
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const statusEl = document.getElementById('formStatus');
       const submitBtn = document.getElementById('submitBtn');
+
+      // Session guard — one submit per browser session.
+      if (hasSubmittedThisSession()){
+        statusEl.className = 'form-status error';
+        statusEl.textContent = 'You\'ve already submitted an RSVP in this session.';
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Already sent ✓';
+        return;
+      }
 
       submitBtn.disabled = true;
       submitBtn.textContent = 'Sending…';
@@ -437,24 +459,33 @@
           }
         });
 
+        // Duplicate-name check against the live Sheet (source of truth).
+        const submittedName = normalizeName(payload.name);
+        if (!submittedName){
+          statusEl.className = 'form-status error';
+          statusEl.textContent = 'Please enter your name.';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send RSVP';
+          return;
+        }
+        const liveList = await fetchAttendees();
+        if (Array.isArray(liveList)){
+          attendeesCache = liveList;
+          const dup = liveList.some(g => normalizeName(g.name) === submittedName);
+          if (dup){
+            statusEl.className = 'form-status error';
+            statusEl.textContent = 'An RSVP already exists for that name. WhatsApp +356 99488202 to update it.';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send RSVP';
+            return;
+          }
+        }
+
         if (!RSVP_ENDPOINT || RSVP_ENDPOINT.includes('PASTE_GAS_WEB_APP_URL_HERE')){
-          // Endpoint not deployed yet — store locally and confirm so guests
-          // see the friendly "thanks" instead of the WhatsApp fallback error.
-          const list = loadAttendees();
-          const filtered = list.filter(x => x.email?.toLowerCase() !== payload.email?.toLowerCase());
-          filtered.push({
-            name: payload.name,
-            email: payload.email,
-            attending: payload.attending,
-            adults: payload.adults,
-            children: payload.children,
-            ts: Date.now()
-          });
-          saveAttendees(filtered);
-          statusEl.className = 'form-status success';
-          statusEl.textContent = '🧸 Thank you! Your RSVP has been received.';
-          form.reset();
-          submitBtn.textContent = 'Sent ✓';
+          statusEl.className = 'form-status error';
+          statusEl.textContent = 'RSVP endpoint not configured. Please WhatsApp +356 99488202.';
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Send RSVP';
           return;
         }
 
@@ -466,17 +497,11 @@
           body: formData
         });
 
-        const list = loadAttendees();
-        const filtered = list.filter(x => x.email?.toLowerCase() !== payload.email?.toLowerCase());
-        filtered.push({
-          name: payload.name,
-          email: payload.email,
-          attending: payload.attending,
-          adults: payload.adults,
-          children: payload.children,
-          ts: Date.now()
-        });
-        saveAttendees(filtered);
+        markSubmittedThisSession();
+
+        // Re-fetch from the Sheet so the painted list reflects the truth,
+        // not an optimistic local guess.
+        renderAttendees();
 
         statusEl.className = 'form-status success';
         statusEl.textContent = '🧸 Thank you! Your RSVP has been received.';

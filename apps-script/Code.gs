@@ -34,6 +34,31 @@ function doPost(e) {
   try {
     const p = (e && e.parameter) ? e.parameter : {};
     const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
+
+    // Duplicate-name guard — Sheet is the source of truth, so reject any
+    // submission whose name already appears. Case + whitespace insensitive.
+    const submittedName = String(p.name || '').trim().toLowerCase().replace(/\s+/g, ' ');
+    if (!submittedName){
+      return ContentService
+        .createTextOutput(JSON.stringify({ ok: false, error: 'missing_name' }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    const data = sheet.getDataRange().getValues();
+    if (data.length >= 2){
+      const headers = data[0].map(h => String(h).trim().toLowerCase());
+      const nameCol = headers.indexOf('name');
+      if (nameCol >= 0){
+        for (let i = 1; i < data.length; i++){
+          const existing = String(data[i][nameCol] || '').trim().toLowerCase().replace(/\s+/g, ' ');
+          if (existing && existing === submittedName){
+            return ContentService
+              .createTextOutput(JSON.stringify({ ok: false, error: 'duplicate_name' }))
+              .setMimeType(ContentService.MimeType.JSON);
+          }
+        }
+      }
+    }
+
     sheet.appendRow([
       new Date(),
       p.name || '',
