@@ -2086,6 +2086,16 @@ body{
     margin:1.6rem 0;
   }
 
+  /* TOC spread sections (baseline for all mobile orientations) */
+  .toc-split .msnap-page{
+    box-sizing:border-box;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+  }
+  /* Landscape keeps two stacked sections sharing the scroll page */
+  .toc-split .msnap-page:first-child{margin-bottom:1.6rem}
+
   /* Compact text sizes */
   .chapter-heading{font-size:1.5rem;margin-bottom:.8rem}
   .toc-title{font-size:1.6rem}
@@ -2223,6 +2233,22 @@ body{
 
   /* Photo carousel dots — bigger tap targets */
   .photo-dot{width:8px;height:8px}
+}
+
+/* Mobile portrait: TOC spread becomes two full-height scroll-snap pages so the
+   cover photo is its own screen instead of a half-cut scroll below the TOC. */
+@media (max-width: 640px) and (orientation: portrait){
+  .base-page.right.toc-split{
+    padding:0;
+    scroll-snap-type:y mandatory;
+  }
+  .toc-split .msnap-page{
+    min-height:100%;
+    padding:1.6rem 1.3rem 2rem;
+    scroll-snap-align:start;
+    scroll-snap-stop:always;
+  }
+  .toc-split .msnap-page:first-child{margin-bottom:0}
 }
 
 @media (max-width: 380px){

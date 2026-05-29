@@ -64,9 +64,29 @@
   function buildMobileSpread(spreadIdx){
     const wrap = document.createDocumentFragment();
     const leftTpl = tpl(`tpl-spread-${spreadIdx}-left`);
+    const rightTpl = tpl(`tpl-spread-${spreadIdx}-right`);
+
+    // TOC spread (1): on mobile portrait, TOC and the cover photo each become a
+    // full-height scroll-snap page (no divider) so the photo isn't a half-cut scroll.
+    // CSS scopes the snap behaviour to portrait via the .toc-split container class.
+    if (spreadIdx === 1){
+      if (leftTpl){
+        const s = document.createElement('div');
+        s.className = 'msnap-page';
+        s.appendChild(leftTpl);
+        wrap.appendChild(s);
+      }
+      if (rightTpl){
+        const s = document.createElement('div');
+        s.className = 'msnap-page';
+        s.appendChild(rightTpl);
+        wrap.appendChild(s);
+      }
+      return wrap;
+    }
+
     if (leftTpl) wrap.appendChild(leftTpl);
     // Divider only if both halves exist
-    const rightTpl = tpl(`tpl-spread-${spreadIdx}-right`);
     if (leftTpl && rightTpl){
       const div = document.createElement('div');
       div.className = 'mobile-divider';
@@ -85,6 +105,7 @@
     if (isMobile()){
       // On mobile, stack everything into the right container (left is hidden)
       rightEl.appendChild(buildMobileSpread(spreadIdx));
+      rightEl.classList.toggle('toc-split', spreadIdx === 1);
     } else {
       const leftTpl = tpl(`tpl-spread-${spreadIdx}-left`);
       const rightTpl = tpl(`tpl-spread-${spreadIdx}-right`);
@@ -899,6 +920,7 @@
         // Populate the base page NOW so it's ready underneath when the cover slides off
         basePageRight.innerHTML = '';
         basePageRight.appendChild(buildMobileSpread(1));
+        basePageRight.classList.add('toc-split');
         basePageRight.scrollTop = 0;
         bindTocLinks();
         // Trigger cover slide
