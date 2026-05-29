@@ -162,6 +162,7 @@
       stopPhotoCarousel();
     }
     if (spreadIdx === 7){
+      updateDaysToGo();
       renderAttendees();
     }
     if (spreadIdx === 8){
@@ -185,14 +186,42 @@
   function normalizeName(s){
     return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
   }
-  // Apps Script /exec redirects to script.googleusercontent.com but still sets
-  // Access-Control-Allow-Origin: *, so a plain CORS fetch works. (Earlier the
-  // code used JSONP, but the 302 strips the ?callback= param so the <script>
-  // tag received bare JSON and failed to parse — site appeared empty.)
+  function validGuestPayload(data){
+    return data && data.ok && Array.isArray(data.guests);
+  }
+  function fetchAttendeesJsonp(){
+    return new Promise((resolve, reject) => {
+      const callback = 'elijahGuests_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+      const script = document.createElement('script');
+      const cleanup = () => {
+        delete window[callback];
+        script.remove();
+      };
+      const timeout = setTimeout(() => {
+        cleanup();
+        reject(new Error('Guest list JSONP timed out'));
+      }, 10000);
+
+      window[callback] = (data) => {
+        clearTimeout(timeout);
+        cleanup();
+        if (validGuestPayload(data)) resolve(data.guests);
+        else reject(new Error('Guest list JSONP returned an invalid payload'));
+      };
+      script.onerror = () => {
+        clearTimeout(timeout);
+        cleanup();
+        reject(new Error('Guest list JSONP failed to load'));
+      };
+      script.src = RSVP_ENDPOINT + '?callback=' + encodeURIComponent(callback) + '&t=' + Date.now();
+      document.head.appendChild(script);
+    });
+  }
   async function fetchAttendees(){
     if (!RSVP_ENDPOINT || RSVP_ENDPOINT.includes('PASTE_GAS_WEB_APP_URL_HERE')){
       return null;
     }
+    let fetchError = null;
     try {
       const ctrl = new AbortController();
       const to = setTimeout(() => ctrl.abort(), 10000);
@@ -203,11 +232,21 @@
         redirect: 'follow'
       });
       clearTimeout(to);
-      if (!res.ok) return null;
+      if (!res.ok) throw new Error('Guest list fetch returned HTTP ' + res.status);
       const data = await res.json();
-      if (data && data.ok && Array.isArray(data.guests)) return data.guests;
-      return null;
+      if (validGuestPayload(data)) return data.guests;
+      throw new Error('Guest list fetch returned an invalid payload');
     } catch (e){
+      fetchError = e;
+    }
+
+    try {
+      return await fetchAttendeesJsonp();
+    } catch (jsonpError){
+      console.warn('Could not load Google Sheet guest list.', {
+        fetchError: fetchError,
+        jsonpError: jsonpError
+      });
       return null;
     }
   }
