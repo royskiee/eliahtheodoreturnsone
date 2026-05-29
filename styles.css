@@ -1422,6 +1422,34 @@ body{
   display:grid;
   gap:.4rem;
 }
+.attendees-loader{
+  min-height:150px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:.75rem;
+  text-align:center;
+  padding:1.5rem 1rem;
+  color:var(--cocoa-soft);
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  font-size:.95rem;
+  background:rgba(207,214,224,.22);
+  border-radius:12px;
+  border:1px dashed rgba(61,94,137,.24);
+}
+.loader-ring{
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  border:2px solid rgba(61,94,137,.18);
+  border-top-color:var(--dusty-blue);
+  animation:loader-spin .8s linear infinite;
+}
+@keyframes loader-spin{
+  to{transform:rotate(360deg)}
+}
 .guest-chip{
   background:var(--cream);
   border-radius:10px;
@@ -1443,6 +1471,10 @@ body{
   font-size:.85rem;
   flex-shrink:0;
 }
+.guest-copy{
+  flex:1;
+  min-width:0;
+}
 .guest-chip:nth-child(3n) .guest-avatar{background:var(--teddy);color:var(--cream)}
 .guest-chip:nth-child(3n+1) .guest-avatar{background:var(--milky-tan);color:var(--cocoa)}
 .guest-chip .name{
@@ -1461,7 +1493,17 @@ body{
   text-transform:uppercase;
   margin-top:.1rem;
 }
+.guest-message{
+  margin-top:.35rem;
+  color:var(--cocoa-soft);
+  font-family:'Cormorant Garamond', serif;
+  font-size:.92rem;
+  font-style:italic;
+  line-height:1.25;
+  overflow-wrap:anywhere;
+}
 .attendees-empty{
+  display:none;
   text-align:center;
   padding:1.5rem 1rem;
   color:var(--cocoa-soft);

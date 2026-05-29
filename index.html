@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 <title>Elijah's First Birthday · A Storybook</title>
 <meta name="description" content="Once upon a time... Join us in celebrating Elijah's 1st birthday — July 26, 2026 at AX The Palace, Sliema." />
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="apple-touch-icon" href="assets/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=Inter:wght@300;400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
@@ -596,6 +598,10 @@
       <span class="chapter-eyebrow" style="font-size:1.2rem;margin-bottom:.3rem">Names in the book</span>
       <div class="page-flourish small">✦</div>
       <div class="attendees-list-wrap">
+        <div id="attendeesLoader" class="attendees-loader" role="status" aria-live="polite">
+          <span class="loader-ring" aria-hidden="true"></span>
+          Opening the guest list...
+        </div>
         <div id="attendeesList" class="attendees-list"></div>
         <div id="attendeesEmpty" class="attendees-empty">
           <span class="quill">✎</span>

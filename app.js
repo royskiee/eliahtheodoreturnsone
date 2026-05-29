@@ -262,8 +262,10 @@
     const yes = list.filter(a => a.attending && /^yes/i.test(a.attending));
     const container = document.getElementById('attendeesList');
     const emptyEl = document.getElementById('attendeesEmpty');
+    const loaderEl = document.getElementById('attendeesLoader');
     if (!container) return;
 
+    if (loaderEl) loaderEl.style.display = 'none';
     container.innerHTML = '';
     if (yes.length === 0){
       if (emptyEl) emptyEl.style.display = 'block';
@@ -282,14 +284,16 @@
       const plusBits = [];
       if (adults > 1) plusBits.push(`+${adults - 1} adult${adults - 1 === 1 ? '' : 's'}`);
       if (children > 0) plusBits.push(`+${children} ${children === 1 ? 'child' : 'children'}`);
+      const message = String(a.message || '').trim();
 
       const chip = document.createElement('div');
       chip.className = 'guest-chip';
       chip.innerHTML = `
         <div class="guest-avatar">${initials(a.name)}</div>
-        <div style="flex:1;min-width:0">
+        <div class="guest-copy">
           <div class="name">${escapeHtml(a.name)}</div>
           ${plusBits.length ? `<div class="plus">${plusBits.join(' · ')}</div>` : ''}
+          ${message ? `<div class="guest-message">${escapeHtml(message)}</div>` : ''}
         </div>
       `;
       container.appendChild(chip);
@@ -298,6 +302,10 @@
     const sg = document.getElementById('statGuests'); if (sg) sg.textContent = totalGuests;
   }
   async function renderAttendees(){
+    const loaderEl = document.getElementById('attendeesLoader');
+    const emptyEl = document.getElementById('attendeesEmpty');
+    if (loaderEl) loaderEl.style.display = 'flex';
+    if (emptyEl) emptyEl.style.display = 'none';
     const fresh = await fetchAttendees();
     if (fresh){
       attendeesCache = fresh;
