@@ -1031,15 +1031,21 @@
     targetZone.appendChild(leaf);
     void leaf.offsetHeight;
 
-    if (direction === 'forward'){
-      basePageRight.innerHTML = '';
-      const newRight = tpl(`tpl-spread-${toSpread}-right`);
-      if (newRight) basePageRight.appendChild(newRight);
-    } else {
+    // Swap both base pages together at the moment the leaf is edge-on (~half-way
+    // through the flip). Pre-swapping baseRight earlier caused a visible flash of
+    // OLD-LEFT + NEW-RIGHT as the leaf-front shrank past ~70°.
+    let swapped = false;
+    const swapBase = () => {
+      if (swapped) return;
+      swapped = true;
       basePageLeft.innerHTML = '';
       const newLeft = tpl(`tpl-spread-${toSpread}-left`);
       if (newLeft) basePageLeft.appendChild(newLeft);
-    }
+      basePageRight.innerHTML = '';
+      const newRight = tpl(`tpl-spread-${toSpread}-right`);
+      if (newRight) basePageRight.appendChild(newRight);
+    };
+    const swapTimer = setTimeout(swapBase, FLIP_DURATION * 0.5);
 
     playPaperFlip();
     requestAnimationFrame(() => {
@@ -1050,15 +1056,8 @@
     const finish = () => {
       if (finished) return;
       finished = true;
-      if (direction === 'forward'){
-        basePageLeft.innerHTML = '';
-        const newLeft = tpl(`tpl-spread-${toSpread}-left`);
-        if (newLeft) basePageLeft.appendChild(newLeft);
-      } else {
-        basePageRight.innerHTML = '';
-        const newRight = tpl(`tpl-spread-${toSpread}-right`);
-        if (newRight) basePageRight.appendChild(newRight);
-      }
+      clearTimeout(swapTimer);
+      swapBase();
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           leaf.remove();
