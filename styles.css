@@ -20,8 +20,12 @@ body{
   color:var(--ink);
   font-family:'Cormorant Garamond', Georgia, serif;
   font-size:20px;
-  line-height:1.65;
+  line-height:1.7;
+  font-weight:400;
   position:relative;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
 }
 
 /* Background audio element — hidden */
@@ -784,9 +788,9 @@ body{
 }
 .story-text{
   font-family:'Cormorant Garamond', serif;
-  font-size:clamp(1rem, 1.3vw, 1.2rem);
-  line-height:1.7;
-  color:var(--cocoa-soft);
+  font-size:clamp(1.08rem, 1.4vw, 1.25rem);
+  line-height:1.75;
+  color:var(--cocoa);
   text-align:left;
   max-width:90%;
   margin:0 auto;
@@ -970,7 +974,8 @@ body{
 .palette{
   display:flex;
   justify-content:center;
-  gap:14px;
+  column-gap:14px;
+  row-gap:40px;
   flex-wrap:wrap;
 }
 .swatch{
@@ -978,15 +983,16 @@ body{
   border-radius:50%;
   box-shadow:0 6px 14px -4px rgba(36,59,92,.18), inset 0 0 0 1px rgba(255,255,255,.4);
   position:relative;
+  flex:0 0 auto;
 }
 .swatch::after{
   content:attr(data-name);
   position:absolute;
-  top:calc(100% + 8px);
+  top:calc(100% + 10px);
   left:50%;
   transform:translateX(-50%);
   font-family:'Inter', sans-serif;
-  font-size:8px;
+  font-size:9px;
   letter-spacing:0.18em;
   text-transform:uppercase;
   color:var(--cocoa-soft);
@@ -995,10 +1001,10 @@ body{
 .dress-note{
   margin-top:2.2rem;
   font-style:italic;
-  color:var(--cocoa-soft);
-  font-size:.95rem;
-  line-height:1.55;
-  max-width:90%;
+  color:var(--cocoa);
+  font-size:1.05rem;
+  line-height:1.65;
+  max-width:92%;
   margin-left:auto;
   margin-right:auto;
 }
@@ -1023,17 +1029,17 @@ body{
 }
 .kindly-note h4{
   font-family:'Inter', sans-serif;
-  font-size:9px;
+  font-size:10px;
   letter-spacing:0.25em;
   text-transform:uppercase;
   color:var(--cinnamon);
-  margin-bottom:.3rem;
-  font-weight:500;
+  margin-bottom:.4rem;
+  font-weight:600;
 }
 .kindly-note p{
   color:var(--cocoa);
-  font-size:.9rem;
-  line-height:1.45;
+  font-size:.98rem;
+  line-height:1.55;
   font-style:italic;
 }
 .kindly-note .avoid{display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap}
@@ -1375,8 +1381,8 @@ body{
    ========================================================= */
 .attendees-stats{
   display:grid;
-  grid-template-columns:1fr 1fr 1fr;
-  gap:.5rem;
+  grid-template-columns:1fr 1fr;
+  gap:.6rem;
   margin:1rem 0;
 }
 .stat{
@@ -1402,9 +1408,10 @@ body{
   margin-top:.3rem;
 }
 .attendees-intro{
-  color:var(--cocoa-soft);
+  color:var(--cocoa);
   font-style:italic;
-  font-size:.95rem;
+  font-size:1.05rem;
+  line-height:1.6;
   margin-bottom:.6rem;
 }
 .attendees-list-wrap{
@@ -1648,6 +1655,69 @@ body{
 }
 .form-status.success{display:block;background:var(--milky-tan);color:var(--cocoa)}
 .form-status.error{display:block;background:#F4D4D0;color:#8B3A3A}
+
+/* Add-to-Calendar block (rendered into .form-status on success) */
+.cal-invite{
+  margin-top:.9rem;
+  padding-top:.9rem;
+  border-top:1px dashed rgba(61,94,137,.28);
+  text-align:center;
+}
+.cal-invite-head{margin-bottom:.7rem}
+.cal-eyebrow{
+  display:block;
+  font-family:'Inter', sans-serif;
+  font-size:9px;
+  letter-spacing:.28em;
+  text-transform:uppercase;
+  color:var(--cocoa-soft);
+  margin-bottom:.4rem;
+}
+.cal-invite-meta{
+  font-family:'Fraunces', serif;
+  font-style:italic;
+  color:var(--cocoa);
+  line-height:1.35;
+}
+.cal-invite-meta strong{
+  display:block;
+  font-weight:500;
+  font-size:1.05rem;
+  margin-bottom:.15rem;
+}
+.cal-invite-meta span{
+  display:block;
+  font-size:.92rem;
+  color:var(--cocoa-soft);
+}
+.cal-invite-actions{
+  display:flex;
+  gap:.5rem;
+  flex-wrap:wrap;
+  justify-content:center;
+}
+.cal-btn{
+  flex:1 1 140px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  padding:10px 14px;
+  border-radius:10px;
+  font-family:'Inter', sans-serif;
+  font-size:11px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  text-decoration:none;
+  font-weight:500;
+  border:1.5px solid var(--cocoa);
+  color:var(--cocoa);
+  background:transparent;
+  transition:all .25s;
+  cursor:pointer;
+}
+.cal-btn:hover{background:var(--cocoa);color:var(--cream)}
+.cal-btn-google{background:var(--cocoa);color:var(--cream)}
+.cal-btn-google:hover{background:var(--honey);border-color:var(--honey)}
 
 /* RSVP left page — invitation + photographer note */
 .rsvp-invite{
@@ -1906,7 +1976,14 @@ body{
   /* Mobile: single-page experience.
      The book becomes one tall page that displays the LEFT content
      followed by the RIGHT content from each spread, stacked. */
-  body{font-size:16px}
+  body{font-size:17px;line-height:1.7}
+  .story-text{font-size:1.08rem;line-height:1.75;color:var(--cocoa)}
+  .dress-note{font-size:1.05rem;line-height:1.7}
+  .attendees-intro{font-size:1.05rem;line-height:1.65}
+  .rsvp-invite-text{font-size:1.05rem;line-height:1.7}
+  .kindly-note p{font-size:1rem;line-height:1.6}
+  .info-value{font-size:1.05rem !important}
+  .info-sub{font-size:.9rem}
 
   .book{
     width:min(96vw, 480px);
@@ -2114,7 +2191,11 @@ body{
   .kids-menu-card p{font-size:.88rem}
 
   /* Attendees */
-  .attendees-list-wrap{flex:none;max-height:300px;overflow-y:auto}
+  .attendees-list-wrap{flex:none;max-height:min(60vh, 480px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .attendees-list{gap:.5rem}
+  .guest-chip{padding:.65rem .85rem}
+  .guest-chip .name{font-size:1rem}
+  .guest-message{font-size:.98rem}
   .attendee-row{padding:.55rem .7rem}
   .attendee-stats{gap:.7rem;flex-wrap:wrap}
   .stat-card{padding:.65rem .8rem;min-width:0;flex:1 1 30%}

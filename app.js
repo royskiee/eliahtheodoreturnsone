@@ -269,7 +269,6 @@
     container.innerHTML = '';
     if (yes.length === 0){
       if (emptyEl) emptyEl.style.display = 'block';
-      const sf = document.getElementById('statFamilies'); if (sf) sf.textContent = '0';
       const sg = document.getElementById('statGuests'); if (sg) sg.textContent = '0';
       return;
     }
@@ -298,7 +297,6 @@
       `;
       container.appendChild(chip);
     });
-    const sf = document.getElementById('statFamilies'); if (sf) sf.textContent = yes.length;
     const sg = document.getElementById('statGuests'); if (sg) sg.textContent = totalGuests;
   }
   async function renderAttendees(){
@@ -452,6 +450,83 @@
     }
   }
 
+  // ====== Add-to-Calendar ======
+  // Event: Elijah's 1st Birthday — 2026-07-26 12:30–16:30 Malta (CEST, UTC+2)
+  const CAL_EVENT = {
+    title: "Elijah Theodore Bandong's 1st Birthday Party",
+    startUtc: '20260726T103000Z',
+    endUtc:   '20260726T143000Z',
+    location: 'State Hall & Alexandra Gardens, Sliema, Malta',
+    details:  "Join us in celebrating Elijah's first birthday! Smart elegant attire kindly requested. More details: https://elijahturnsone.com"
+  };
+  function googleCalendarUrl(){
+    const p = new URLSearchParams({
+      action: 'TEMPLATE',
+      text: CAL_EVENT.title,
+      dates: `${CAL_EVENT.startUtc}/${CAL_EVENT.endUtc}`,
+      details: CAL_EVENT.details,
+      location: CAL_EVENT.location
+    });
+    return 'https://calendar.google.com/calendar/render?' + p.toString();
+  }
+  function buildIcs(){
+    const esc = s => String(s).replace(/\\/g,'\\\\').replace(/\n/g,'\\n').replace(/,/g,'\\,').replace(/;/g,'\\;');
+    return [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Elijah Turns One//EN',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'BEGIN:VEVENT',
+      'UID:elijah-1st-birthday-2026-07-26@elijahturnsone.com',
+      'DTSTAMP:20260101T000000Z',
+      `DTSTART:${CAL_EVENT.startUtc}`,
+      `DTEND:${CAL_EVENT.endUtc}`,
+      `SUMMARY:${esc(CAL_EVENT.title)}`,
+      `LOCATION:${esc(CAL_EVENT.location)}`,
+      `DESCRIPTION:${esc(CAL_EVENT.details)}`,
+      'END:VEVENT',
+      'END:VCALENDAR',
+      ''
+    ].join('\r\n');
+  }
+  function icsBlobUrl(){
+    const blob = new Blob([buildIcs()], { type: 'text/calendar;charset=utf-8' });
+    return URL.createObjectURL(blob);
+  }
+  function renderCalendarInvite(target){
+    if (!target) return;
+    if (target.querySelector('.cal-invite')) return;
+    const wrap = document.createElement('div');
+    wrap.className = 'cal-invite';
+    wrap.innerHTML = `
+      <div class="cal-invite-head">
+        <span class="cal-eyebrow">— Save the Date —</span>
+        <div class="cal-invite-meta">
+          <strong>Saturday, 26 July 2026</strong>
+          <span>12:30 – 16:30 · Sliema, Malta</span>
+        </div>
+      </div>
+      <div class="cal-invite-actions">
+        <a class="cal-btn cal-btn-google" target="_blank" rel="noopener" href="${googleCalendarUrl()}">Google Calendar</a>
+        <a class="cal-btn cal-btn-ics" download="elijah-1st-birthday.ics" href="#">Apple · Outlook (.ics)</a>
+      </div>
+    `;
+    const icsLink = wrap.querySelector('.cal-btn-ics');
+    icsLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const url = icsBlobUrl();
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'elijah-1st-birthday.ics';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    });
+    target.appendChild(wrap);
+  }
+
   // ====== RSVP Form ======
   function bindRsvpForm(){
     const form = document.getElementById('rsvpForm');
@@ -469,6 +544,7 @@
       if (statusEl){
         statusEl.className = 'form-status success';
         statusEl.textContent = '🧸 You\'ve already RSVP\'d in this session. Refresh tomorrow to update.';
+        renderCalendarInvite(statusEl);
       }
     }
 
@@ -479,8 +555,9 @@
 
       // Session guard — one submit per browser session.
       if (hasSubmittedThisSession()){
-        statusEl.className = 'form-status error';
-        statusEl.textContent = 'You\'ve already submitted an RSVP in this session.';
+        statusEl.className = 'form-status success';
+        statusEl.textContent = '🧸 You\'ve already RSVP\'d. Save the date below.';
+        renderCalendarInvite(statusEl);
         submitBtn.disabled = true;
         submitBtn.textContent = 'Already sent ✓';
         return;
@@ -548,6 +625,7 @@
 
         statusEl.className = 'form-status success';
         statusEl.textContent = '🧸 Thank you! Your RSVP has been received.';
+        renderCalendarInvite(statusEl);
         form.reset();
         submitBtn.textContent = 'Sent ✓';
       } catch (err){
