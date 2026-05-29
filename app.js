@@ -182,19 +182,35 @@
   function saveAttendees(list){
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch(e){}
   }
-  async function fetchAttendees(){
-    if (!RSVP_ENDPOINT || RSVP_ENDPOINT.includes('PASTE_GAS_WEB_APP_URL_HERE')){
-      return null;
-    }
-    try {
-      const res = await fetch(RSVP_ENDPOINT + '?t=' + Date.now(), { method: 'GET' });
-      if (!res.ok) return null;
-      const json = await res.json();
-      if (!json || !json.ok || !Array.isArray(json.guests)) return null;
-      return json.guests;
-    } catch(e){
-      return null;
-    }
+  // Apps Script /exec redirects to script.googleusercontent.com which strips the
+  // CORS headers — a plain `fetch()` GET fails in the browser. JSONP via a
+  // <script> tag bypasses CORS entirely. The Apps Script doGet wraps the JSON
+  // payload as `callback({...})` when a ?callback= param is present.
+  function fetchAttendees(){
+    return new Promise(resolve => {
+      if (!RSVP_ENDPOINT || RSVP_ENDPOINT.includes('PASTE_GAS_WEB_APP_URL_HERE')){
+        resolve(null);
+        return;
+      }
+      const cb = '__rsvp_cb_' + Math.floor(performance.now() * 1000);
+      const tag = document.createElement('script');
+      let settled = false;
+      const cleanup = (result) => {
+        if (settled) return;
+        settled = true;
+        try { delete window[cb]; } catch(e){ window[cb] = undefined; }
+        tag.remove();
+        resolve(result);
+      };
+      window[cb] = (data) => {
+        if (data && data.ok && Array.isArray(data.guests)) cleanup(data.guests);
+        else cleanup(null);
+      };
+      tag.onerror = () => cleanup(null);
+      tag.src = RSVP_ENDPOINT + '?callback=' + cb + '&t=' + Date.now();
+      document.head.appendChild(tag);
+      setTimeout(() => cleanup(null), 10000);
+    });
   }
   function initials(name){
     return name.trim().split(/\s+/).slice(0, 2).map(s => s[0]?.toUpperCase() || '').join('');
@@ -1031,21 +1047,32 @@
     targetZone.appendChild(leaf);
     void leaf.offsetHeight;
 
-    // Swap both base pages together at the moment the leaf is edge-on (~half-way
-    // through the flip). Pre-swapping baseRight earlier caused a visible flash of
-    // OLD-LEFT + NEW-RIGHT as the leaf-front shrank past ~70°.
+    // Asymmetric swap kills the 90° flash. The leaf-front covers ONE zone for the
+    // first half of the rotation; pre-populate that base now (hidden under the leaf).
+    // The OTHER base stays OLD and swaps mid-rotation while the leaf-back covers it.
+    //   forward : leaf-front covers right-zone → pre-populate base-RIGHT with NEW
+    //             base-LEFT swaps later (covered by leaf-back past 90°)
+    //   backward: leaf-front covers left-zone  → pre-populate base-LEFT with NEW
+    //             base-RIGHT swaps later
+    const preBase    = direction === 'forward' ? basePageRight : basePageLeft;
+    const lateBase   = direction === 'forward' ? basePageLeft  : basePageRight;
+    const preSide    = direction === 'forward' ? 'right' : 'left';
+    const lateSide   = direction === 'forward' ? 'left'  : 'right';
+    preBase.innerHTML = '';
+    const preContent = tpl(`tpl-spread-${toSpread}-${preSide}`);
+    if (preContent) preBase.appendChild(preContent);
+
     let swapped = false;
     const swapBase = () => {
       if (swapped) return;
       swapped = true;
-      basePageLeft.innerHTML = '';
-      const newLeft = tpl(`tpl-spread-${toSpread}-left`);
-      if (newLeft) basePageLeft.appendChild(newLeft);
-      basePageRight.innerHTML = '';
-      const newRight = tpl(`tpl-spread-${toSpread}-right`);
-      if (newRight) basePageRight.appendChild(newRight);
+      lateBase.innerHTML = '';
+      const lateContent = tpl(`tpl-spread-${toSpread}-${lateSide}`);
+      if (lateContent) lateBase.appendChild(lateContent);
     };
-    const swapTimer = setTimeout(swapBase, FLIP_DURATION * 0.5);
+    // ~70% time = leaf-back has fully covered the destination zone (cubic-bezier
+    // (.32,.04,.32,1) puts rotation past ~150° by then, so the swap is hidden).
+    const swapTimer = setTimeout(swapBase, FLIP_DURATION * 0.7);
 
     playPaperFlip();
     requestAnimationFrame(() => {

@@ -82,11 +82,12 @@ function doPost(e) {
 // Source of truth is the Sheet itself, so deleting a row removes that
 // guest from the site immediately on next page load.
 function doGet(e) {
+  const callback = (e && e.parameter && e.parameter.callback) || '';
   try {
     const sheet = SpreadsheetApp.openById(SHEET_ID).getSheets()[0];
     const data = sheet.getDataRange().getValues();
     if (data.length < 2) {
-      return jsonOut({ ok: true, guests: [] });
+      return jsonOut({ ok: true, guests: [] }, callback);
     }
     const headers = data[0].map(h => String(h).trim().toLowerCase());
     const col = (key) => headers.indexOf(key);
@@ -116,14 +117,20 @@ function doGet(e) {
         invite_type: cInv >= 0 ? String(row[cInv] || '') : ''
       });
     }
-    return jsonOut({ ok: true, guests: guests });
+    return jsonOut({ ok: true, guests: guests }, callback);
   } catch (err) {
-    return jsonOut({ ok: false, error: String(err), guests: [] });
+    return jsonOut({ ok: false, error: String(err), guests: [] }, callback);
   }
 }
 
-function jsonOut(obj) {
+function jsonOut(obj, callback) {
+  const text = JSON.stringify(obj);
+  if (callback) {
+    return ContentService
+      .createTextOutput(callback + '(' + text + ')')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
   return ContentService
-    .createTextOutput(JSON.stringify(obj))
+    .createTextOutput(text)
     .setMimeType(ContentService.MimeType.JSON);
 }
