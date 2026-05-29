@@ -185,35 +185,31 @@
   function normalizeName(s){
     return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
   }
-  // Apps Script /exec redirects to script.googleusercontent.com which strips the
-  // CORS headers — a plain `fetch()` GET fails in the browser. JSONP via a
-  // <script> tag bypasses CORS entirely. The Apps Script doGet wraps the JSON
-  // payload as `callback({...})` when a ?callback= param is present.
-  function fetchAttendees(){
-    return new Promise(resolve => {
-      if (!RSVP_ENDPOINT || RSVP_ENDPOINT.includes('PASTE_GAS_WEB_APP_URL_HERE')){
-        resolve(null);
-        return;
-      }
-      const cb = '__rsvp_cb_' + Math.floor(performance.now() * 1000);
-      const tag = document.createElement('script');
-      let settled = false;
-      const cleanup = (result) => {
-        if (settled) return;
-        settled = true;
-        try { delete window[cb]; } catch(e){ window[cb] = undefined; }
-        tag.remove();
-        resolve(result);
-      };
-      window[cb] = (data) => {
-        if (data && data.ok && Array.isArray(data.guests)) cleanup(data.guests);
-        else cleanup(null);
-      };
-      tag.onerror = () => cleanup(null);
-      tag.src = RSVP_ENDPOINT + '?callback=' + cb + '&t=' + Date.now();
-      document.head.appendChild(tag);
-      setTimeout(() => cleanup(null), 10000);
-    });
+  // Apps Script /exec redirects to script.googleusercontent.com but still sets
+  // Access-Control-Allow-Origin: *, so a plain CORS fetch works. (Earlier the
+  // code used JSONP, but the 302 strips the ?callback= param so the <script>
+  // tag received bare JSON and failed to parse — site appeared empty.)
+  async function fetchAttendees(){
+    if (!RSVP_ENDPOINT || RSVP_ENDPOINT.includes('PASTE_GAS_WEB_APP_URL_HERE')){
+      return null;
+    }
+    try {
+      const ctrl = new AbortController();
+      const to = setTimeout(() => ctrl.abort(), 10000);
+      const res = await fetch(RSVP_ENDPOINT + '?t=' + Date.now(), {
+        method: 'GET',
+        cache: 'no-store',
+        signal: ctrl.signal,
+        redirect: 'follow'
+      });
+      clearTimeout(to);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data && data.ok && Array.isArray(data.guests)) return data.guests;
+      return null;
+    } catch (e){
+      return null;
+    }
   }
   function initials(name){
     return name.trim().split(/\s+/).slice(0, 2).map(s => s[0]?.toUpperCase() || '').join('');
