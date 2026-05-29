@@ -1604,7 +1604,7 @@ body{
 
 .radio-group{display:flex;gap:.5rem;min-width:0}
 .radio-opt{flex:1;min-width:0}
-.radio-opt input{position:absolute;opacity:0;pointer-events:none}
+.radio-opt input{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px;margin:0}
 .radio-opt label{
   display:block;
   padding:10px;
