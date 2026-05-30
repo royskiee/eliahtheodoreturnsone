@@ -174,12 +174,104 @@
     if (photoCarouselTimer){ clearInterval(photoCarouselTimer); photoCarouselTimer = null; }
   }
 
+  // ====== Venue photo 3D tilt (mobile, the Setting spread) ======
+  // Gyroscope drives a live parallax tilt so the photos pop off the page.
+  // iOS 13+ gates motion behind a tap, so we show a one-time chip; if the
+  // user denies (or there's no gyro) we fall back to a scroll-linked tilt.
+  let venueTilt = null;
+  function clampN(v, min, max){ return v < min ? min : (v > max ? max : v); }
+  function stopVenueTilt(){
+    if (venueTilt){ venueTilt.dispose(); venueTilt = null; }
+  }
+  function startVenueTilt(){
+    stopVenueTilt();
+    if (!isMobile()) return;
+    const scroller = basePageRight;
+    const photos = Array.from(scroller.querySelectorAll('.venue-photo-main, .venue-photo-secondary'));
+    if (!photos.length) return;
+
+    scroller.classList.add('venue-tilt-live');
+
+    // Eased angles, shared across the photos (rAF lerps current → target).
+    let tgX = 0, tgY = 0, curX = 0, curY = 0, running = true, raf = 0;
+    function loop(){
+      if (!running) return;
+      curX += (tgX - curX) * 0.12;
+      curY += (tgY - curY) * 0.12;
+      const t = 'perspective(1100px) rotateX(' + curX.toFixed(2) + 'deg) rotateY(' +
+                curY.toFixed(2) + 'deg) translateY(-3px) scale(1.015)';
+      for (let i = 0; i < photos.length; i++) photos[i].style.transform = t;
+      raf = requestAnimationFrame(loop);
+    }
+    raf = requestAnimationFrame(loop);
+
+    let orientHandler = null, scrollHandler = null, chip = null;
+    function attachGyro(){
+      orientHandler = function(e){
+        const g = e.gamma == null ? 0 : e.gamma;  // left/right tilt [-90,90]
+        const b = e.beta  == null ? 45 : e.beta;  // front/back tilt [-180,180]
+        tgY = clampN(g, -28, 28) * 0.32;           // follow left/right
+        tgX = clampN(45 - b, -28, 28) * 0.30;      // follow front/back (45° = neutral hold)
+      };
+      window.addEventListener('deviceorientation', orientHandler, true);
+    }
+    function attachScroll(){
+      scrollHandler = function(){
+        const sr = scroller.getBoundingClientRect();
+        const r = photos[0].getBoundingClientRect();
+        const off = (r.top + r.height / 2) - (sr.top + sr.height / 2);
+        tgX = clampN(-off / sr.height * 16, -10, 10);
+        tgY = 0;
+      };
+      scroller.addEventListener('scroll', scrollHandler, { passive: true });
+      scrollHandler();
+    }
+
+    const DOE = window.DeviceOrientationEvent;
+    if (DOE && typeof DOE.requestPermission === 'function'){
+      // iOS 13+ — motion needs an explicit tap to grant.
+      chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'venue-tilt-chip';
+      chip.textContent = '✦ Tilt to explore';
+      photos[0].appendChild(chip);
+      chip.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        DOE.requestPermission().then(function(state){
+          if (state === 'granted') attachGyro(); else attachScroll();
+        }).catch(function(){ attachScroll(); });
+        if (chip){ chip.remove(); chip = null; }
+      });
+    } else if (DOE && 'ondeviceorientation' in window){
+      attachGyro();        // Android / non-gated browsers
+    } else {
+      attachScroll();      // no gyroscope available
+    }
+
+    venueTilt = {
+      dispose: function(){
+        running = false;
+        if (raf) cancelAnimationFrame(raf);
+        if (orientHandler) window.removeEventListener('deviceorientation', orientHandler, true);
+        if (scrollHandler) scroller.removeEventListener('scroll', scrollHandler);
+        if (chip){ chip.remove(); chip = null; }
+        scroller.classList.remove('venue-tilt-live');
+        for (let i = 0; i < photos.length; i++) photos[i].style.transform = '';
+      }
+    };
+  }
+
   // Bind interactive widgets per spread
   function bindSpreadInteractions(spreadIdx){
     if (spreadIdx === 2){
       bindPhotoCarousel();
     } else {
       stopPhotoCarousel();
+    }
+    if (spreadIdx === 4){
+      startVenueTilt();
+    } else {
+      stopVenueTilt();
     }
     if (spreadIdx === 7){
       updateDaysToGo();
