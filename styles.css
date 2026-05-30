@@ -2086,15 +2086,30 @@ body{
     margin:1.6rem 0;
   }
 
-  /* TOC spread sections (baseline for all mobile orientations) */
+  /* TOC spread (mobile): only ONE sub-page renders at a time (contents list OR
+     cover photo), reached by tapping Next — no scrolling. The single section
+     fills the whole page. */
+  .base-page.right.toc-split{padding:0;overflow:hidden}
   .toc-split .msnap-page{
+    height:100%;
     box-sizing:border-box;
+    padding:1.6rem 1.3rem 2rem;
     display:flex;
     flex-direction:column;
-    justify-content:center;
   }
-  /* Landscape keeps two stacked sections sharing the scroll page */
-  .toc-split .msnap-page:first-child{margin-bottom:1.6rem}
+  .toc-split .msnap-page .page-content{height:100%;min-height:0}
+  /* Contents list: centered vertically */
+  .toc-split .msnap-page .page-content.flow{justify-content:center}
+  /* Photo sub-page: thinner frame, image fills the screen */
+  .toc-split .msnap-page .page-content.stretch{padding:0}
+  .toc-split .msnap-page .story-photo{flex:1;height:auto;min-height:0}
+
+  /* Stacked (non-TOC) spreads: give the photo a sane fixed height so it can't
+     stretch tall and elongate the scroll page. */
+  .base-page.right:not(.toc-split) .story-photo{
+    flex:none;
+    height:min(56vh, 420px);
+  }
 
   /* Compact text sizes */
   .chapter-heading{font-size:1.5rem;margin-bottom:.8rem}
@@ -2233,22 +2248,6 @@ body{
 
   /* Photo carousel dots — bigger tap targets */
   .photo-dot{width:8px;height:8px}
-}
-
-/* Mobile portrait: TOC spread becomes two full-height scroll-snap pages so the
-   cover photo is its own screen instead of a half-cut scroll below the TOC. */
-@media (max-width: 640px) and (orientation: portrait){
-  .base-page.right.toc-split{
-    padding:0;
-    scroll-snap-type:y mandatory;
-  }
-  .toc-split .msnap-page{
-    min-height:100%;
-    padding:1.6rem 1.3rem 2rem;
-    scroll-snap-align:start;
-    scroll-snap-stop:always;
-  }
-  .toc-split .msnap-page:first-child{margin-bottom:0}
 }
 
 @media (max-width: 380px){

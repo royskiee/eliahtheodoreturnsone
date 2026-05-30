@@ -27,6 +27,9 @@
 
   let currentSpread = 0;
   let isFlipping = false;
+  // Mobile-only: TOC (spread 1) splits into two tap-through sub-pages —
+  // the contents list, then the cover photo. false = list, true = photo.
+  let tocMobilePhoto = false;
   const FLIP_DURATION = 1100; // ms — matches CSS
 
   const book = document.getElementById('book');
@@ -66,20 +69,16 @@
     const leftTpl = tpl(`tpl-spread-${spreadIdx}-left`);
     const rightTpl = tpl(`tpl-spread-${spreadIdx}-right`);
 
-    // TOC spread (1): on mobile portrait, TOC and the cover photo each become a
-    // full-height scroll-snap page (no divider) so the photo isn't a half-cut scroll.
-    // CSS scopes the snap behaviour to portrait via the .toc-split container class.
+    // TOC spread (1): on mobile, render only ONE sub-page at a time — the
+    // contents list OR the cover photo — so the photo is reached by tapping
+    // Next (no scrolling). tocMobilePhoto picks which one. CSS (.toc-split)
+    // makes the single section fill the screen.
     if (spreadIdx === 1){
-      if (leftTpl){
+      const which = tocMobilePhoto ? rightTpl : leftTpl;
+      if (which){
         const s = document.createElement('div');
         s.className = 'msnap-page';
-        s.appendChild(leftTpl);
-        wrap.appendChild(s);
-      }
-      if (rightTpl){
-        const s = document.createElement('div');
-        s.className = 'msnap-page';
-        s.appendChild(rightTpl);
+        s.appendChild(which);
         wrap.appendChild(s);
       }
       return wrap;
@@ -906,6 +905,12 @@
     isFlipping = true;
     const direction = targetSpread > currentSpread ? 'forward' : 'backward';
 
+    // Mobile TOC sub-page: arriving forward (from cover) shows the contents
+    // list; arriving backward (from a later chapter) shows the photo, since the
+    // photo sits "after" the list in reading order. Any other spread clears it.
+    if (targetSpread === 1) tocMobilePhoto = (currentSpread > 1);
+    else tocMobilePhoto = false;
+
     // Update controls preemptively
     updateNav(targetSpread);
 
@@ -1041,6 +1046,7 @@
         playPaperFlip();
         basePageRight.innerHTML = '';
         basePageRight.appendChild(buildMobileSpread(targetSpread));
+        basePageRight.classList.toggle('toc-split', targetSpread === 1);
         basePageRight.scrollTop = 0;
         requestAnimationFrame(() => {
           requestAnimationFrame(() => coverLeaf.classList.add('flipped'));
@@ -1148,6 +1154,36 @@
     });
   }
 
+  // Mobile: swap the TOC between its contents-list and photo sub-pages with a
+  // page sweep — no spread change, just re-render the single visible section.
+  function showTocMobilePage(showPhoto){
+    if (isFlipping) return;
+    isFlipping = true;
+    tocMobilePhoto = showPhoto;
+    triggerPageSweep(showPhoto ? 'forward' : 'backward');
+    playPaperFlip();
+    setTimeout(() => {
+      basePageRight.innerHTML = '';
+      basePageRight.appendChild(buildMobileSpread(1));
+      basePageRight.classList.add('toc-split');
+      basePageRight.scrollTop = 0;
+      bindTocLinks();
+    }, 380);
+    setTimeout(() => { isFlipping = false; }, 760);
+  }
+
+  // Next/Prev that honor the mobile TOC sub-page split. On mobile, stepping
+  // forward off the contents list reveals the photo first; stepping back from
+  // the photo returns to the list. Everywhere else, plain spread navigation.
+  function stepNext(){
+    if (isMobile() && currentSpread === 1 && !tocMobilePhoto){ showTocMobilePage(true); return; }
+    goTo(currentSpread + 1);
+  }
+  function stepPrev(){
+    if (isMobile() && currentSpread === 1 && tocMobilePhoto){ showTocMobilePage(false); return; }
+    goTo(currentSpread - 1);
+  }
+
   function animateFlip(fromSpread, toSpread, direction, done){
     const mobile = isMobile();
 
@@ -1180,6 +1216,7 @@
       // Pre-populate basePageRight with NEW content — hidden under the leaf
       basePageRight.innerHTML = '';
       basePageRight.appendChild(buildMobileSpread(toSpread));
+      basePageRight.classList.toggle('toc-split', toSpread === 1);
       basePageRight.scrollTop = 0;
 
       void leaf.offsetHeight;
@@ -1318,10 +1355,10 @@
   }
 
   // ====== Event wiring ======
-  navPrev.addEventListener('click', () => goTo(currentSpread - 1));
-  navNext.addEventListener('click', () => goTo(currentSpread + 1));
-  edgeLeft.addEventListener('click', () => goTo(currentSpread - 1));
-  edgeRight.addEventListener('click', () => goTo(currentSpread + 1));
+  navPrev.addEventListener('click', () => stepPrev());
+  navNext.addEventListener('click', () => stepNext());
+  edgeLeft.addEventListener('click', () => stepPrev());
+  edgeRight.addEventListener('click', () => stepNext());
 
   // Cover click opens the book
   coverFront.addEventListener('click', () => {
@@ -1354,8 +1391,8 @@
   document.addEventListener('keydown', (e) => {
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable)) return;
-    if (e.key === 'ArrowRight'){ e.preventDefault(); goTo(currentSpread + 1); }
-    else if (e.key === 'ArrowLeft'){ e.preventDefault(); goTo(currentSpread - 1); }
+    if (e.key === 'ArrowRight'){ e.preventDefault(); stepNext(); }
+    else if (e.key === 'ArrowLeft'){ e.preventDefault(); stepPrev(); }
     else if (e.key === 'Home'){ e.preventDefault(); goTo(0); }
     else if (e.key === 'End'){ e.preventDefault(); goTo(TOTAL_SPREADS - 1); }
   });
@@ -1370,8 +1407,8 @@
     const dx = e.changedTouches[0].screenX - touchStartX;
     const dy = e.changedTouches[0].screenY - touchStartY;
     if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)){
-      if (dx < 0) goTo(currentSpread + 1);
-      else goTo(currentSpread - 1);
+      if (dx < 0) stepNext();
+      else stepPrev();
     }
   }, { passive: true });
 
