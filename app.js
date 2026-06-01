@@ -10,17 +10,19 @@
   // the site (next page load).
   const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzG1JcpbVq2iU5YvG9sfikKIp59ofp0-dKwwtdG6v7SWlLDu8N1ntGJ-TpVKZJH14-a/exec';
 
-  // 10 spreads total: 0 = cover, 1-9 = content spreads
-  const TOTAL_SPREADS = 10;
+  // 12 spreads total: 0 = cover, 1-11 = content spreads
+  const TOTAL_SPREADS = 12;
   const SPREAD_NAMES = [
     'Cover',
     'Contents',
     'Once Upon a Time',
+    'About Elijah',
+    'Our Memories',
     'The Details',
-    'The Setting',
+    "The Day's Story",
     'Finding Us',
-    'The Feast',
     'The Guest List',
+    'Questions',
     'Kindly Respond',
     'The End'
   ];
@@ -263,24 +265,36 @@
 
   // Bind interactive widgets per spread
   function bindSpreadInteractions(spreadIdx){
-    if (spreadIdx === 2){
-      bindPhotoCarousel();
-    } else {
-      stopPhotoCarousel();
-    }
-    if (spreadIdx === 4){
-      startVenueTilt();
-    } else {
-      stopVenueTilt();
-    }
-    if (spreadIdx === 7){
+    stopPhotoCarousel();
+    stopVenueTilt();
+    if (spreadIdx === 8){
       updateDaysToGo();
       renderAttendees();
     }
-    if (spreadIdx === 8){
+    if (spreadIdx === 9){
+      bindFaq();
+    }
+    if (spreadIdx === 10){
       bindRsvpForm();
       applyInviteTypeMessage();
     }
+  }
+
+  // ====== FAQ accordion ======
+  // Native <details> handles toggle; we just make sibling items close so
+  // only one answer is open at a time within a page.
+  function bindFaq(){
+    const items = document.querySelectorAll('#basePageLeft .faq-item, #basePageRight .faq-item');
+    items.forEach(d => {
+      if (d.dataset.bound) return;
+      d.dataset.bound = 'true';
+      d.addEventListener('toggle', () => {
+        if (!d.open) return;
+        d.parentElement.querySelectorAll('.faq-item[open]').forEach(o => {
+          if (o !== d) o.open = false;
+        });
+      });
+    });
   }
 
   // ====== Attendees ======
@@ -432,6 +446,20 @@
     const daysToGo = Math.max(0, Math.ceil((partyDate - today) / (1000 * 60 * 60 * 24)));
     const el = document.getElementById('statDays');
     if (el) el.textContent = daysToGo > 0 ? daysToGo : '🎉';
+
+    // Days-to-go badge on the RSVP shortcut button
+    const badge = document.getElementById('rsvpDaysBadge');
+    if (badge){
+      if (daysToGo > 0){
+        badge.textContent = daysToGo;
+        badge.setAttribute('title', daysToGo + (daysToGo === 1 ? ' day to go' : ' days to go'));
+        badge.hidden = false;
+      } else {
+        badge.textContent = '🎉';
+        badge.setAttribute('title', "It's the big day!");
+        badge.hidden = false;
+      }
+    }
   }
 
   // ========================================================
@@ -1405,14 +1433,16 @@
 
   // Chapter index — desktop-only persistent strip shown once past TOC (spread > 1).
   const CHAPTER_ENTRIES = [
-    { idx: 2, label: 'Once',     num: 'I' },
-    { idx: 3, label: 'Details',  num: 'II' },
-    { idx: 4, label: 'Setting',  num: 'III' },
-    { idx: 5, label: 'Finding',  num: 'IV' },
-    { idx: 6, label: 'Feast',    num: 'V' },
-    { idx: 7, label: 'Guests',   num: 'VI' },
-    { idx: 8, label: 'RSVP',     num: 'VII' },
-    { idx: 9, label: 'End',      num: 'VIII' }
+    { idx: 2,  label: 'Once',     num: 'I' },
+    { idx: 3,  label: 'About',    num: 'II' },
+    { idx: 4,  label: 'Memories', num: 'III' },
+    { idx: 5,  label: 'Details',  num: 'IV' },
+    { idx: 6,  label: 'Story',    num: 'V' },
+    { idx: 7,  label: 'Finding',  num: 'VI' },
+    { idx: 8,  label: 'Guests',   num: 'VII' },
+    { idx: 9,  label: 'FAQ',      num: 'VIII' },
+    { idx: 10, label: 'RSVP',     num: 'IX' },
+    { idx: 11, label: 'End',      num: 'X' }
   ];
   function buildChapterIndex(){
     if (!chapterIndex || chapterIndex.dataset.built) return;
@@ -1461,7 +1491,7 @@
   document.getElementById('brandHome').addEventListener('click', () => goTo(0));
 
   // RSVP shortcut
-  document.getElementById('rsvpShortcut').addEventListener('click', () => goTo(8));
+  document.getElementById('rsvpShortcut').addEventListener('click', () => goTo(10));
 
   // Sound toggle
   const soundToggle = document.getElementById('soundToggle');

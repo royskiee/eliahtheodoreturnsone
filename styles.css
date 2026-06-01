@@ -2345,3 +2345,253 @@ body{
   .topbar{padding:.5rem 1rem}
   .book-nav{bottom:.5rem}
 }
+
+/* =========================================================
+   ADDED — RSVP days badge, cover flip hint, About Elijah,
+   Memories gallery, Day's Story schedule, FAQ accordion
+   ========================================================= */
+
+/* RSVP shortcut — days-to-go badge */
+.rsvp-shortcut{position:relative}
+.rsvp-days{
+  position:absolute;
+  top:-9px;
+  right:-9px;
+  min-width:24px;
+  height:24px;
+  padding:0 5px;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  background:var(--cream);
+  color:var(--cinnamon);
+  font-family:'Fraunces', serif;
+  font-size:12px;
+  font-weight:500;
+  letter-spacing:0;
+  line-height:1;
+  border:1.5px solid var(--honey);
+  box-shadow:0 2px 7px rgba(36,59,92,.35);
+}
+
+/* Cover — "tap the right to turn" gesture hint */
+.cover-flip-hint{
+  position:absolute;
+  right:14px;
+  top:50%;
+  transform:translateY(-50%);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:.45rem;
+  color:rgba(220,232,248,.95);
+  opacity:.95;
+  pointer-events:none;
+  z-index:5;
+  animation:cfh-nudge 2.4s ease-in-out infinite;
+}
+.cover-flip-hint .cfh-text{
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  font-size:.82rem;
+  line-height:1.25;
+  text-align:center;
+  letter-spacing:.02em;
+  color:rgba(220,232,248,.95);
+  text-shadow:0 1px 4px rgba(0,0,0,.4);
+}
+.cover-flip-hint .cfh-arrow{
+  display:inline-flex;
+  width:40px;
+  height:40px;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  background:rgba(220,232,248,.16);
+  border:1.5px solid rgba(220,232,248,.6);
+  color:rgba(220,232,248,.98);
+  backdrop-filter:blur(2px);
+  box-shadow:0 4px 12px rgba(0,0,0,.3);
+}
+@keyframes cfh-nudge{
+  0%,100%{transform:translateY(-50%) translateX(0)}
+  50%{transform:translateY(-50%) translateX(7px)}
+}
+@media (prefers-reduced-motion: reduce){
+  .cover-flip-hint{animation:none}
+}
+
+/* About Elijah */
+.about-intro{
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  font-size:.98rem;
+  color:var(--cocoa-soft);
+  margin:.15rem 0 .6rem;
+}
+.about-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.4rem}
+.about-list li{
+  display:flex;
+  align-items:center;
+  gap:.8rem;
+  padding:.48rem .8rem;
+  background:rgba(255,255,255,.42);
+  border:1px solid var(--line);
+  border-radius:14px;
+}
+.about-list .af-emoji{font-size:1.4rem;line-height:1;flex:0 0 auto}
+.about-list .af-copy{display:flex;flex-direction:column;gap:.1rem;min-width:0}
+.about-list .af-label{
+  font-family:'Inter', sans-serif;
+  font-size:.62rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--honey);
+}
+.about-list .af-value{
+  font-family:'Fraunces', serif;
+  font-size:1.02rem;
+  color:var(--cocoa);
+}
+.about-photo-caption{
+  text-align:center;
+  font-family:'Pinyon Script', cursive;
+  font-size:1.5rem;
+  color:var(--cinnamon);
+  margin-top:.5rem;
+}
+
+/* Memories gallery */
+.memories-intro{
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  font-size:1.02rem;
+  color:var(--cocoa-soft);
+  margin:.2rem 0 .8rem;
+}
+.memories-gallery{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:.6rem;
+}
+.memory-card{
+  margin:0;
+  background:var(--cream);
+  border:1px solid var(--line);
+  border-radius:14px;
+  padding:.4rem .4rem .1rem;
+  box-shadow:0 6px 16px -8px rgba(36,59,92,.4);
+  transform:rotate(-.6deg);
+}
+.memory-card:nth-child(even){transform:rotate(.7deg)}
+.memory-card img{
+  width:100%;
+  height:118px;
+  object-fit:cover;
+  border-radius:9px;
+  display:block;
+}
+.memory-card figcaption{
+  text-align:center;
+  font-family:'Pinyon Script', cursive;
+  font-size:1.3rem;
+  color:var(--cinnamon);
+  padding:.25rem 0 .15rem;
+}
+.memories-outro{
+  text-align:center;
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  color:var(--cocoa-soft);
+  margin-top:.7rem;
+}
+
+/* The Day's Story — schedule */
+.schedule-list{list-style:none;margin:.2rem 0 0;padding:0;display:flex;flex-direction:column;gap:.6rem}
+.schedule-item{
+  display:flex;
+  gap:.7rem;
+  padding:.6rem .8rem;
+  background:rgba(255,255,255,.42);
+  border:1px solid var(--line);
+  border-radius:14px;
+}
+.schedule-item .sch-emoji{font-size:1.3rem;line-height:1.2;flex:0 0 auto}
+.schedule-item .sch-copy{min-width:0}
+.schedule-item .sch-head{display:flex;align-items:baseline;gap:.55rem;flex-wrap:wrap;margin-bottom:.15rem}
+.schedule-item .sch-time{
+  font-family:'Inter', sans-serif;
+  font-size:.62rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--honey);
+  white-space:nowrap;
+}
+.schedule-item .sch-title{
+  font-family:'Fraunces', serif;
+  font-size:1rem;
+  color:var(--cocoa);
+}
+.schedule-item p{
+  font-family:'Cormorant Garamond', serif;
+  font-size:.95rem;
+  line-height:1.35;
+  color:var(--cocoa-soft);
+  margin:0;
+}
+
+/* FAQ accordion */
+.faq-list{display:flex;flex-direction:column;gap:.55rem;margin-top:.2rem}
+.faq-item{
+  background:rgba(255,255,255,.42);
+  border:1px solid var(--line);
+  border-radius:14px;
+  overflow:hidden;
+}
+.faq-item summary{
+  list-style:none;
+  cursor:pointer;
+  padding:.7rem .9rem;
+  font-family:'Fraunces', serif;
+  font-size:1rem;
+  color:var(--cocoa);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:.6rem;
+}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::after{
+  content:'+';
+  font-family:'Inter', sans-serif;
+  font-size:1.2rem;
+  color:var(--honey);
+  transition:transform .25s;
+  flex:0 0 auto;
+}
+.faq-item[open] summary::after{transform:rotate(45deg)}
+.faq-item .faq-answer{
+  padding:0 .9rem .8rem;
+  font-family:'Cormorant Garamond', serif;
+  font-size:.97rem;
+  line-height:1.4;
+  color:var(--cocoa-soft);
+}
+.faq-footer{
+  margin-top:.9rem;
+  text-align:center;
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  color:var(--cocoa-soft);
+}
+
+/* Guest list — single centered stat (guest count hidden) */
+.attendees-stats.single{justify-content:center}
+
+@media (max-width: 640px){
+  .cover-flip-hint{right:8px}
+  .cover-flip-hint .cfh-text{font-size:.74rem}
+  .memory-card img{height:140px}
+  .rsvp-days{top:-7px;right:-7px;min-width:21px;height:21px;font-size:11px}
+}
