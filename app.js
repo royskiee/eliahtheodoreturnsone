@@ -451,11 +451,12 @@
     const badge = document.getElementById('rsvpDaysBadge');
     if (badge){
       if (daysToGo > 0){
-        badge.textContent = daysToGo;
-        badge.setAttribute('title', daysToGo + (daysToGo === 1 ? ' day to go' : ' days to go'));
+        const word = daysToGo === 1 ? 'day' : 'days';
+        badge.textContent = daysToGo + ' ' + word + ' to go';
+        badge.setAttribute('title', daysToGo + ' ' + word + ' to go');
         badge.hidden = false;
       } else {
-        badge.textContent = '🎉';
+        badge.textContent = '🎉 Today!';
         badge.setAttribute('title', "It's the big day!");
         badge.hidden = false;
       }
