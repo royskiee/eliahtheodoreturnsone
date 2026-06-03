@@ -86,14 +86,17 @@
       return wrap;
     }
 
-    if (leftTpl) wrap.appendChild(leftTpl);
+    // About Elijah (spread 3): show the photo ABOVE the text on mobile.
+    const first  = spreadIdx === 3 ? rightTpl : leftTpl;
+    const second = spreadIdx === 3 ? leftTpl  : rightTpl;
+    if (first) wrap.appendChild(first);
     // Divider only if both halves exist
-    if (leftTpl && rightTpl){
+    if (first && second){
       const div = document.createElement('div');
       div.className = 'mobile-divider';
       wrap.appendChild(div);
     }
-    if (rightTpl) wrap.appendChild(rightTpl);
+    if (second) wrap.appendChild(second);
     return wrap;
   }
 
@@ -922,15 +925,20 @@
   // Attempt early autoplay (may fail until user interacts)
   startMusic();
 
-  // Watchdog: if music should be playing but isn't, try again.
+  // Watchdog: if music should be playing AND the page is in front but isn't, retry.
   setInterval(() => {
-    if (!bgMusic || !soundsEnabled) return;
+    if (!bgMusic || !soundsEnabled || document.hidden) return;
     if (bgMusic.paused) startMusic();
   }, 4000);
 
+  // Stop the song whenever the user isn't looking at the page — switching tabs,
+  // minimising, or leaving the browser for another app — and resume on return.
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && soundsEnabled) startMusic();
+    if (document.hidden) stopMusic();
+    else if (soundsEnabled) startMusic();
   });
+  window.addEventListener('blur', stopMusic);
+  window.addEventListener('focus', () => { if (soundsEnabled) startMusic(); });
 
   function toggleSounds(){
     soundsEnabled = !soundsEnabled;

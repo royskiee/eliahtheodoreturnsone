@@ -626,18 +626,22 @@ body{
 .page-content.stretch{justify-content:flex-start}
 
 .chapter-eyebrow{
-  font-family:'Pinyon Script', cursive;
-  font-size:clamp(1.4rem, 2.2vw, 2rem);
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  font-weight:500;
+  font-size:clamp(1rem, 1.4vw, 1.25rem);
+  letter-spacing:.12em;
+  text-transform:uppercase;
   color:var(--cinnamon);
-  line-height:1;
-  margin-bottom:.4rem;
+  line-height:1.2;
+  margin-bottom:.5rem;
 }
 .chapter-heading{
   font-family:'Playfair Display', serif;
-  font-weight:300;
+  font-weight:400;
   font-size:clamp(1.6rem, 3.2vw, 2.6rem);
-  line-height:1.05;
-  letter-spacing:-0.015em;
+  line-height:1.08;
+  letter-spacing:-0.01em;
   color:var(--cocoa);
   margin-bottom:1.2rem;
 }
@@ -687,7 +691,7 @@ body{
    ========================================================= */
 .toc-title{
   font-family:'Playfair Display', serif;
-  font-weight:300;
+  font-weight:400;
   font-style:italic;
   font-size:clamp(1.8rem, 3vw, 2.6rem);
   color:var(--cocoa);
@@ -1560,9 +1564,8 @@ body{
   font-family:'Playfair Display', serif;
   font-size:.92rem;
   color:var(--cocoa);
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+  overflow-wrap:anywhere;
+  line-height:1.25;
 }
 .guest-chip .plus{
   font-family:'Inter', sans-serif;
@@ -2179,10 +2182,13 @@ body{
     padding:1.6rem 1.3rem 2rem;
     display:flex;
     flex-direction:column;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
   }
-  .toc-split .msnap-page .page-content{height:100%;min-height:0}
-  /* Contents list: centered vertically */
-  .toc-split .msnap-page .page-content.flow{justify-content:center}
+  .toc-split .msnap-page .page-content{height:auto;min-height:100%}
+  /* Contents list: top-aligned so the header is never clipped; centers only
+     when there's room to spare. */
+  .toc-split .msnap-page .page-content.flow{justify-content:flex-start}
   /* Photo sub-page: thinner frame, image fills the screen */
   .toc-split .msnap-page .page-content.stretch{padding:0}
   .toc-split .msnap-page .story-photo{flex:1;height:auto;min-height:0}
@@ -2299,7 +2305,9 @@ body{
   .kids-menu-card p{font-size:.88rem}
 
   /* Attendees */
-  .attendees-list-wrap{flex:none;max-height:min(60vh, 480px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+  /* Let the whole page scroll instead of a short nested box, so every guest
+     name is reachable (the inner scroll was clipping the list on mobile). */
+  .attendees-list-wrap{flex:none;max-height:none;overflow:visible}
   .attendees-list{gap:.5rem}
   .guest-chip{padding:.65rem .85rem}
   .guest-chip .name{font-size:1rem}
@@ -2492,15 +2500,21 @@ body{
   width:100%;
   height:118px;
   object-fit:cover;
+  object-position:center 30%;
   border-radius:9px;
   display:block;
 }
+.memory-card img.pos-low{object-position:center 75%}
+.memory-card img.pos-face{object-position:center 28%}
 .memory-card figcaption{
   text-align:center;
-  font-family:'Pinyon Script', cursive;
-  font-size:1.3rem;
+  font-family:'Cormorant Garamond', serif;
+  font-style:italic;
+  font-weight:500;
+  font-size:1.05rem;
+  letter-spacing:.02em;
   color:var(--cinnamon);
-  padding:.25rem 0 .15rem;
+  padding:.3rem 0 .15rem;
 }
 .memories-outro{
   text-align:center;
