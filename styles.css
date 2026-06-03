@@ -562,7 +562,6 @@ body{
   font-size:clamp(1.4rem, 2.5vw, 2rem);
   color:rgba(255,220,160,.85);
   margin-bottom:1rem;
-  transform:rotate(-2deg);
 }
 .cover-title{
   font-family:'Playfair Display', serif;
@@ -622,8 +621,13 @@ body{
   color:var(--cocoa);
   overflow:hidden;
 }
-.page-content.flow{justify-content:center}
+.page-content.flow{justify-content:safe center}
 .page-content.stretch{justify-content:flex-start}
+/* Short desktops: let tall chapter pages scroll the last sliver instead of clipping */
+@media (min-width:821px) and (max-height:760px){
+  .page-content.flow{overflow-y:auto;scrollbar-width:none}
+  .page-content.flow::-webkit-scrollbar{display:none}
+}
 
 .chapter-eyebrow{
   font-family:'Cormorant Garamond', serif;
@@ -714,7 +718,7 @@ body{
   display:flex;
   align-items:baseline;
   gap:10px;
-  padding:.55rem 0;
+  padding:.34rem 0;
   border-bottom:1px dashed rgba(61,94,137,.3);
   font-family:'Playfair Display', serif;
   font-size:clamp(.95rem, 1.4vw, 1.1rem);
@@ -2439,14 +2443,14 @@ body{
   font-style:italic;
   font-size:.98rem;
   color:var(--cocoa-soft);
-  margin:.15rem 0 .6rem;
+  margin:.15rem 0 .45rem;
 }
-.about-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.55rem}
+.about-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:.32rem}
 .about-list li{
   display:flex;
   align-items:center;
   gap:.9rem;
-  padding:.62rem .9rem;
+  padding:.4rem .9rem;
   background:rgba(255,255,255,.42);
   border:1px solid var(--line);
   border-radius:14px;
