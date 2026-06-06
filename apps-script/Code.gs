@@ -70,19 +70,28 @@ function doPost(e) {
       }
     }
 
-    sheet.appendRow([
-      new Date(),
-      p.name || '',
-      p.mobile || '',
-      p.attending || '',
-      p.adults || '',
-      p.children || '',
-      p.message || '',
-      p.invite_type || '',
-      (e.parameter && e.parameter._ua) || '',
-      p.guest2_name || '',
-      p.children_names || ''
-    ]);
+    // Map values by HEADER NAME, not fixed position — the Sheet's column
+    // order can differ from the order below, so build the row to match the
+    // live header row. Unknown headers stay blank.
+    const headerRow = data.length ? data[0] : sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const values = {
+      timestamp: new Date(),
+      name: p.name || '',
+      mobile: p.mobile || '',
+      attending: p.attending || '',
+      adults: p.adults || '',
+      children: p.children || '',
+      message: p.message || '',
+      invite_type: p.invite_type || '',
+      user_agent: (e.parameter && e.parameter._ua) || '',
+      guest2_name: p.guest2_name || '',
+      children_names: p.children_names || ''
+    };
+    const newRow = headerRow.map(h => {
+      const key = String(h).trim().toLowerCase();
+      return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : '';
+    });
+    sheet.appendRow(newRow);
 
     const attending = String(p.attending || '').toLowerCase().startsWith('yes')
       ? '✅ ACCEPTING' : '❌ DECLINING';
