@@ -642,18 +642,14 @@
     const childrenGroup = children ? children.closest('.form-group') : null;
 
     if (INVITE_TYPE === 'solo'){
+      // Solo guests are simply counted as 1 — no count selection shown at all.
+      // Values still post via the disabled-field include logic at submit time.
       if (adults){ adults.value = '1'; adults.disabled = true; }
       if (children){ children.value = '0'; children.disabled = true; }
       if (childrenGroup) childrenGroup.style.display = 'none';
-      if (adultsGroup){
-        const note = adultsGroup.querySelector('.invite-lock');
-        if (!note){
-          const span = document.createElement('span');
-          span.className = 'invite-lock';
-          span.textContent = 'Invited as a solo guest';
-          adultsGroup.appendChild(span);
-        }
-      }
+      if (adultsGroup) adultsGroup.style.display = 'none';
+      const row = adultsGroup ? adultsGroup.closest('.form-row') : null;
+      if (row) row.style.display = 'none';
     } else if (INVITE_TYPE === 'couple'){
       if (adults){ adults.value = '2'; adults.disabled = true; }
       if (children){ children.value = '0'; children.disabled = true; }
