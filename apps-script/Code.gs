@@ -191,7 +191,12 @@ function resolveCell_(header, p, e){
     case 'timestamp':      return new Date();
     case 'name':           return p.name || '';
     case 'guest2_name':    return p.guest2_name || '';
-    case 'mobile':         return p.mobile || '';
+    // Leading +/=/-/@ makes Sheets parse the cell as a formula ("+356…" →
+    // parse error). Prefix an apostrophe to force plain text; it stays hidden.
+    case 'mobile': {
+      const m = String(p.mobile || '');
+      return /^[=+\-@]/.test(m) ? "'" + m : m;
+    }
     case 'attending':      return p.attending || '';
     case 'adults':         return p.adults || '';
     case 'children':       return p.children || '';
