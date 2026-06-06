@@ -110,6 +110,21 @@
     return wrap;
   }
 
+  // Safari does not reliably fire `loading="lazy"` for images that live inside
+  // the 3D-transformed flipbook pages — it never considers them "in viewport",
+  // so they silently never load. Once a page is actually built/shown, force any
+  // pending lazy images to load eagerly.
+  function forceLoadImages(container){
+    if (!container) return;
+    container.querySelectorAll('img[loading="lazy"]').forEach(img => {
+      img.loading = 'eager';
+      if (!img.complete || img.naturalWidth === 0){
+        const src = img.getAttribute('src');
+        if (src){ img.removeAttribute('src'); img.setAttribute('src', src); }
+      }
+    });
+  }
+
   // Build a spread's left/right pages into containers (desktop) or stacked (mobile)
   function buildSpreadPages(spreadIdx, leftEl, rightEl){
     if (spreadIdx === 0) return;
@@ -126,6 +141,8 @@
       if (leftTpl) leftEl.appendChild(leftTpl);
       if (rightTpl) rightEl.appendChild(rightTpl);
     }
+    forceLoadImages(leftEl);
+    forceLoadImages(rightEl);
   }
 
   // Update the base pages to show a given spread (content only — does NOT bind interactions)
@@ -153,6 +170,7 @@
       if (leftTpl) wrap.appendChild(leftTpl);
     }
     coverBack.appendChild(wrap);
+    forceLoadImages(coverBack);
     bindTocLinks();
   }
 
@@ -322,8 +340,47 @@
   function markSubmittedThisSession(){
     try { sessionStorage.setItem(SESSION_SUBMIT_KEY, '1'); } catch(e){}
   }
+
+  // ====== RSVP draft ======
+  // The form is rebuilt from its <template> every time its spread is shown, so
+  // flipping away mid-fill would wipe what the guest typed. Persist a draft on
+  // every input and restore it whenever the form is (re)built.
+  const RSVP_DRAFT_KEY = 'elijah_rsvp_draft';
+  function saveRsvpDraft(form){
+    try {
+      const d = {};
+      form.querySelectorAll('input, select, textarea').forEach(el => {
+        if (!el.name || el.name.charAt(0) === '_') return; // skip honeypot/_subject
+        if (el.type === 'radio'){ if (el.checked) d[el.name] = el.value; }
+        else d[el.name] = el.value;
+      });
+      sessionStorage.setItem(RSVP_DRAFT_KEY, JSON.stringify(d));
+    } catch(e){}
+  }
+  function restoreRsvpDraft(form){
+    try {
+      const raw = sessionStorage.getItem(RSVP_DRAFT_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      Object.keys(d).forEach(name => {
+        form.querySelectorAll('[name="' + (window.CSS && CSS.escape ? CSS.escape(name) : name) + '"]').forEach(el => {
+          if (el.disabled) return; // invite-type locks win over the draft
+          if (el.type === 'radio'){ el.checked = (el.value === d[name]); }
+          else el.value = d[name];
+        });
+      });
+    } catch(e){}
+  }
+  function clearRsvpDraft(){
+    try { sessionStorage.removeItem(RSVP_DRAFT_KEY); } catch(e){}
+  }
   function normalizeName(s){
     return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  }
+  // Trailing 8 digits, so +356 / 00356 / local forms of the same number match.
+  function normalizeMobile(s){
+    const d = String(s || '').replace(/\D/g, '');
+    return d.length > 8 ? d.slice(-8) : d;
   }
   function validGuestPayload(data){
     return data && data.ok && Array.isArray(data.guests);
@@ -721,6 +778,13 @@
     // Apply any URL-based invite-type locks (solo/couple/family)
     applyInviteType(form);
 
+    // Restore an in-progress draft (survives accidental page flips), then keep
+    // it in sync on every edit.
+    restoreRsvpDraft(form);
+    const persist = () => saveRsvpDraft(form);
+    form.addEventListener('input', persist);
+    form.addEventListener('change', persist);
+
     // If this browser already submitted in this session, lock the form immediately.
     if (hasSubmittedThisSession()){
       const submitBtn = document.getElementById('submitBtn');
@@ -773,6 +837,7 @@
           submitBtn.textContent = 'Send RSVP';
           return;
         }
+        const submittedMobile = normalizeMobile(payload.mobile);
         const liveList = await fetchAttendees();
         if (Array.isArray(liveList)){
           attendeesCache = liveList;
@@ -780,6 +845,15 @@
           if (dup){
             statusEl.className = 'form-status error';
             statusEl.textContent = 'An RSVP already exists for that name. WhatsApp +356 99488202 to update it.';
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Send RSVP';
+            return;
+          }
+          const dupMobile = submittedMobile &&
+            liveList.some(g => normalizeMobile(g.mobile) === submittedMobile);
+          if (dupMobile){
+            statusEl.className = 'form-status error';
+            statusEl.textContent = 'An RSVP already exists for that mobile number. WhatsApp +356 99488202 to update it.';
             submitBtn.disabled = false;
             submitBtn.textContent = 'Send RSVP';
             return;
@@ -803,6 +877,7 @@
         });
 
         markSubmittedThisSession();
+        clearRsvpDraft();
 
         // Re-fetch from the Sheet so the painted list reflects the truth,
         // not an optimistic local guess.
