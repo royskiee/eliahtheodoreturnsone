@@ -8,7 +8,7 @@
   // The Sheet behind this endpoint is the source of truth for the
   // guest list. Deleting a row in the Sheet hides that guest on
   // the site (next page load).
-  const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzG1JcpbVq2iU5YvG9sfikKIp59ofp0-dKwwtdG6v7SWlLDu8N1ntGJ-TpVKZJH14-a/exec';
+  const RSVP_ENDPOINT = 'https://script.google.com/macros/s/AKfycbyWsIVY7QqMUCc3Gy-X-eatC_e5hL78H0w31L3ndfKlTDw0MGb_n7r3Eo5e7AWgFpO6/exec';
 
   // 12 spreads total: 0 = cover, 1-11 = content spreads
   const TOTAL_SPREADS = 12;
