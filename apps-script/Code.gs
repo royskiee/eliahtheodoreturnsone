@@ -6,7 +6,7 @@
 // SETUP (one time):
 // 1. Create a new Google Sheet titled "Elijah RSVPs".
 //    Add this header row in row 1 (exact order):
-//      timestamp | name | mobile | attending | adults | children | message | invite_type | user_agent
+//      timestamp | name | mobile | attending | adults | children | message | invite_type | user_agent | guest2_name | children_names
 // 2. Copy the Sheet ID from its URL:
 //      https://docs.google.com/spreadsheets/d/<SHEET_ID>/edit
 //    Paste it into SHEET_ID below.
@@ -79,7 +79,9 @@ function doPost(e) {
       p.children || '',
       p.message || '',
       p.invite_type || '',
-      (e.parameter && e.parameter._ua) || ''
+      (e.parameter && e.parameter._ua) || '',
+      p.guest2_name || '',
+      p.children_names || ''
     ]);
 
     const attending = String(p.attending || '').toLowerCase().startsWith('yes')
@@ -90,7 +92,9 @@ function doPost(e) {
       `Mobile:     ${p.mobile}`,
       `Attending:  ${p.attending}`,
       `Adults:     ${p.adults}`,
+      `2nd guest:  ${p.guest2_name || '(none)'}`,
       `Children:   ${p.children}`,
+      `Child names:${p.children_names || '(none)'}`,
       `Invite:     ${p.invite_type || 'default'}`,
       '',
       'Note for Elijah:',
@@ -136,6 +140,8 @@ function doGet(e) {
     const cCh   = col('children');
     const cMsg  = col('message');
     const cInv  = col('invite_type');
+    const cG2   = col('guest2_name');
+    const cCN   = col('children_names');
 
     const guests = [];
     for (let i = 1; i < data.length; i++) {
@@ -150,7 +156,9 @@ function doGet(e) {
         adults: cAd >= 0 ? (row[cAd] || 1) : 1,
         children: cCh >= 0 ? (row[cCh] || 0) : 0,
         message: cMsg >= 0 ? String(row[cMsg] || '') : '',
-        invite_type: cInv >= 0 ? String(row[cInv] || '') : ''
+        invite_type: cInv >= 0 ? String(row[cInv] || '') : '',
+        guest2_name: cG2 >= 0 ? String(row[cG2] || '') : '',
+        children_names: cCN >= 0 ? String(row[cCN] || '') : ''
       });
     }
     return jsonOut({ ok: true, guests: guests }, callback);

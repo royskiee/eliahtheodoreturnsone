@@ -374,6 +374,51 @@
   function clearRsvpDraft(){
     try { sessionStorage.removeItem(RSVP_DRAFT_KEY); } catch(e){}
   }
+  // Show/build name textboxes that depend on the adults & children counts.
+  // 2 adults → one extra "Second Guest" name (mobile is shared, no 2nd mobile).
+  // N children → N child-name boxes. Names ride along to the Sheet + table.
+  function syncExtraNameFields(form){
+    if (!form) return;
+    const adultsSel = form.querySelector('select[name="adults"]');
+    const childrenSel = form.querySelector('select[name="children"]');
+
+    // Second adult's name — visible only when 2 adults.
+    const g2 = form.querySelector('#guest2Group');
+    if (g2){
+      const show = (parseInt(adultsSel && adultsSel.value, 10) || 1) >= 2;
+      g2.hidden = !show;
+      const inp = g2.querySelector('input');
+      if (inp){
+        inp.required = show;        // required only while visible (hidden+required can't focus)
+        if (!show) inp.value = '';
+      }
+    }
+
+    // One name box per child.
+    const wrap = form.querySelector('#childrenNamesGroup');
+    if (wrap){
+      const n = parseInt(childrenSel && childrenSel.value, 10) || 0;
+      // Preserve anything already typed across a rebuild (e.g. 1 → 2 → 1).
+      const prev = {};
+      wrap.querySelectorAll('input').forEach(i => { prev[i.name] = i.value; });
+      wrap.innerHTML = '';
+      wrap.hidden = n <= 0;
+      for (let i = 1; i <= n; i++){
+        const fieldName = 'child_name_' + i;
+        const grp = document.createElement('div');
+        grp.className = 'form-group';
+        const labelText = n > 1 ? ('Child ' + i + "'s Name") : "Child's Name";
+        grp.innerHTML =
+          '<label for="' + fieldName + '">' + labelText + '</label>' +
+          '<input type="text" id="' + fieldName + '" name="' + fieldName +
+          '" placeholder="Child\'s name" autocomplete="off" />';
+        wrap.appendChild(grp);
+        const inp = grp.querySelector('input');
+        inp.required = true;
+        if (prev[fieldName] != null) inp.value = prev[fieldName];
+      }
+    }
+  }
   function normalizeName(s){
     return String(s || '').trim().toLowerCase().replace(/\s+/g, ' ');
   }
@@ -481,12 +526,20 @@
       if (children > 0) plusBits.push(`+${children} ${children === 1 ? 'child' : 'children'}`);
       const message = String(a.message || '').trim();
 
+      // Accompanying names (2nd adult + children), if captured.
+      const guest2 = String(a.guest2_name || '').trim();
+      const childNames = String(a.children_names || '').trim();
+      const nameBits = [];
+      if (guest2) nameBits.push(escapeHtml(guest2));
+      if (childNames) nameBits.push(`${escapeHtml(childNames)} ${children === 1 ? '(child)' : '(children)'}`);
+
       const chip = document.createElement('div');
       chip.className = 'guest-chip';
       chip.innerHTML = `
         <div class="guest-avatar">${initials(a.name)}</div>
         <div class="guest-copy">
           <div class="name">${escapeHtml(a.name)}</div>
+          ${nameBits.length ? `<div class="guest-names">with ${nameBits.join(' · ')}</div>` : ''}
           ${plusBits.length ? `<div class="plus">${plusBits.join(' · ')}</div>` : ''}
           ${message ? `<div class="guest-message">${escapeHtml(message)}</div>` : ''}
         </div>
@@ -781,9 +834,17 @@
     // Restore an in-progress draft (survives accidental page flips), then keep
     // it in sync on every edit.
     restoreRsvpDraft(form);
+    syncExtraNameFields(form);   // build child/2nd-adult boxes for restored counts
+    restoreRsvpDraft(form);      // fill the boxes now they exist
     const persist = () => saveRsvpDraft(form);
     form.addEventListener('input', persist);
     form.addEventListener('change', persist);
+    // Rebuild the dynamic name boxes whenever the adults/children counts change.
+    form.addEventListener('change', (ev) => {
+      if (ev.target && (ev.target.name === 'adults' || ev.target.name === 'children')){
+        syncExtraNameFields(form);
+      }
+    });
 
     // If this browser already submitted in this session, lock the form immediately.
     if (hasSubmittedThisSession()){
@@ -827,6 +888,13 @@
             formData.append(el.name, el.value);
           }
         });
+
+        // Collapse the per-child name boxes into one comma-joined field for
+        // the Sheet's children_names column.
+        const childNames = Array.from(form.querySelectorAll('#childrenNamesGroup input'))
+          .map(i => i.value.trim()).filter(Boolean).join(', ');
+        formData.set('children_names', childNames);
+        payload.children_names = childNames;
 
         // Duplicate-name check against the live Sheet (source of truth).
         const submittedName = normalizeName(payload.name);

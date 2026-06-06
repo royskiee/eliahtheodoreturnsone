@@ -1571,6 +1571,14 @@ body{
   overflow-wrap:anywhere;
   line-height:1.25;
 }
+.guest-chip .guest-names{
+  font-family:'Cormorant Garamond', serif;
+  font-size:.9rem;
+  color:var(--cocoa-soft);
+  line-height:1.25;
+  margin-top:.12rem;
+  overflow-wrap:anywhere;
+}
 .guest-chip .plus{
   font-family:'Inter', sans-serif;
   font-size:8px;

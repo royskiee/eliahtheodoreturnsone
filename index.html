@@ -12,7 +12,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500&family=Pinyon+Script&display=swap" rel="stylesheet">
 <link rel="preload" as="image" href="assets/cover.jpg" fetchpriority="high">
 <link rel="preload" as="image" href="assets/once.jpg">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css?v=20260606b">
 
 </head>
 <body>
@@ -745,6 +745,11 @@
             </select>
           </div>
         </div>
+        <div class="form-group extra-name-group" id="guest2Group" hidden>
+          <label for="guest2_name">Second Guest's Name</label>
+          <input type="text" id="guest2_name" name="guest2_name" placeholder="Full name" autocomplete="off" />
+        </div>
+        <div class="extra-name-group" id="childrenNamesGroup" hidden></div>
         <div class="form-group">
           <label for="message">A Note for Elijah (optional)</label>
           <textarea id="message" name="message" placeholder="A wish, a memory, anything sweet..."></textarea>
@@ -792,6 +797,6 @@
 
 </div>
 
-<script src="app.js"></script>
+<script src="app.js?v=20260606b"></script>
 </body>
 </html>
