@@ -58,6 +58,16 @@
   function isMobile(){
     return window.matchMedia('(max-width: 640px)').matches;
   }
+  // Platform detection for device-native calendar handling.
+  function isIOS(){
+    const ua = navigator.userAgent.toLowerCase();
+    return /iphone|ipad|ipod/.test(ua) ||
+      // iPadOS 13+ reports as Mac — disambiguate via touch points.
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }
+  function isAndroid(){
+    return /android/.test(navigator.userAgent.toLowerCase());
+  }
 
   // Build the cover front
   function buildCoverFront(){
@@ -643,6 +653,25 @@
     if (target.querySelector('.cal-invite')) return;
     const wrap = document.createElement('div');
     wrap.className = 'cal-invite';
+
+    // Device-native options: iOS → Apple Calendar (.ics opens inline),
+    // Android → Google Calendar, Desktop → both (Google web + .ics for
+    // Apple/Outlook). The .ics button label adapts to the platform.
+    const googleBtn = `<a class="cal-btn cal-btn-google" target="_blank" rel="noopener" href="${googleCalendarUrl()}">Google Calendar</a>`;
+    const appleBtn  = `<a class="cal-btn cal-btn-ics" href="#">Apple Calendar</a>`;
+    const desktopIcsBtn = `<a class="cal-btn cal-btn-ics" href="#">Apple · Outlook (.ics)</a>`;
+
+    let actions;
+    if (isMobile() && isIOS()){
+      actions = appleBtn + googleBtn;          // iOS: Apple first
+    } else if (isMobile() && isAndroid()){
+      actions = googleBtn + appleBtn;          // Android: Google first
+    } else if (isMobile()){
+      actions = googleBtn + appleBtn;          // other mobile
+    } else {
+      actions = googleBtn + desktopIcsBtn;     // desktop: web + .ics
+    }
+
     wrap.innerHTML = `
       <div class="cal-invite-head">
         <span class="cal-eyebrow">— Save the Date —</span>
@@ -651,24 +680,36 @@
           <span>12:30 – 16:30 · Sliema, Malta</span>
         </div>
       </div>
-      <div class="cal-invite-actions">
-        <a class="cal-btn cal-btn-google" target="_blank" rel="noopener" href="${googleCalendarUrl()}">Google Calendar</a>
-        <a class="cal-btn cal-btn-ics" download="elijah-1st-birthday.ics" href="#">Apple · Outlook (.ics)</a>
-      </div>
+      <div class="cal-invite-actions">${actions}</div>
     `;
-    const icsLink = wrap.querySelector('.cal-btn-ics');
-    icsLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      const url = icsBlobUrl();
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'elijah-1st-birthday.ics';
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 4000);
+
+    wrap.querySelectorAll('.cal-btn-ics').forEach((icsLink) => {
+      icsLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const url = icsBlobUrl();
+        if (isIOS()){
+          // Safari opens the .ics inline → native "Add to Calendar" sheet.
+          window.location.href = url;
+          setTimeout(() => URL.revokeObjectURL(url), 8000);
+          return;
+        }
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'elijah-1st-birthday.ics';
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+      });
     });
+
     target.appendChild(wrap);
+
+    // Bring the Save-the-Date into view so the guest doesn't have to scroll.
+    requestAnimationFrame(() => {
+      try { wrap.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      catch(_){ wrap.scrollIntoView(); }
+    });
   }
 
   // ====== RSVP Form ======
