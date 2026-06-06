@@ -889,6 +889,14 @@
           }
         });
 
+        // User agent + invite type — set here so they post on EVERY submit,
+        // including default invites (the hidden invite_type field is only
+        // injected for non-default invites).
+        formData.set('_ua', navigator.userAgent);
+        payload._ua = navigator.userAgent;
+        formData.set('invite_type', INVITE_TYPE);
+        payload.invite_type = INVITE_TYPE;
+
         // Collapse the per-child name boxes into one comma-joined field for
         // the Sheet's children_names column.
         const childNames = Array.from(form.querySelectorAll('#childrenNamesGroup input'))

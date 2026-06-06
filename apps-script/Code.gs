@@ -71,26 +71,11 @@ function doPost(e) {
     }
 
     // Map values by HEADER NAME, not fixed position — the Sheet's column
-    // order can differ from the order below, so build the row to match the
-    // live header row. Unknown headers stay blank.
+    // order can change and split columns (children_name_1, _2, …) can be
+    // added without breaking this. Each header resolves its own value;
+    // unknown headers stay blank.
     const headerRow = data.length ? data[0] : sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const values = {
-      timestamp: new Date(),
-      name: p.name || '',
-      mobile: p.mobile || '',
-      attending: p.attending || '',
-      adults: p.adults || '',
-      children: p.children || '',
-      message: p.message || '',
-      invite_type: p.invite_type || '',
-      user_agent: (e.parameter && e.parameter._ua) || '',
-      guest2_name: p.guest2_name || '',
-      children_names: p.children_names || ''
-    };
-    const newRow = headerRow.map(h => {
-      const key = String(h).trim().toLowerCase();
-      return Object.prototype.hasOwnProperty.call(values, key) ? values[key] : '';
-    });
+    const newRow = headerRow.map(h => resolveCell_(String(h).trim().toLowerCase(), p, e));
     sheet.appendRow(newRow);
 
     const attending = String(p.attending || '').toLowerCase().startsWith('yes')
@@ -151,12 +136,25 @@ function doGet(e) {
     const cInv  = col('invite_type');
     const cG2   = col('guest2_name');
     const cCN   = col('children_names');
+    // Per-child split columns (children_name_1, child_name_2, …), in order.
+    const childCols = [];
+    headers.forEach((h, idx) => {
+      if (/^child(?:ren)?_?(?:name_)?\d+$/.test(h)) childCols.push(idx);
+    });
 
     const guests = [];
     for (let i = 1; i < data.length; i++) {
       const row = data[i];
       const name = cName >= 0 ? String(row[cName] || '').trim() : '';
       if (!name) continue; // skip blank rows
+      // children_names = combined column if present, else join the split cols.
+      let childNames = cCN >= 0 ? String(row[cCN] || '').trim() : '';
+      if (!childNames && childCols.length){
+        childNames = childCols
+          .map(idx => String(row[idx] || '').trim())
+          .filter(Boolean)
+          .join(', ');
+      }
       guests.push({
         ts: cTs >= 0 && row[cTs] ? new Date(row[cTs]).getTime() : 0,
         name: name,
@@ -167,12 +165,42 @@ function doGet(e) {
         message: cMsg >= 0 ? String(row[cMsg] || '') : '',
         invite_type: cInv >= 0 ? String(row[cInv] || '') : '',
         guest2_name: cG2 >= 0 ? String(row[cG2] || '') : '',
-        children_names: cCN >= 0 ? String(row[cCN] || '') : ''
+        children_names: childNames
       });
     }
     return jsonOut({ ok: true, guests: guests }, callback);
   } catch (err) {
     return jsonOut({ ok: false, error: String(err), guests: [] }, callback);
+  }
+}
+
+// Resolve one Sheet cell from its (lowercased) header name + the POST params.
+// Header-name driven so columns can be reordered, renamed-ish, or split into
+// per-child columns without editing positional indexes.
+function resolveCell_(header, p, e){
+  // Per-child split columns: "children_name_1" / "child_name_2" / "child_1" …
+  // The form posts each child box as child_name_<N>; also accept the matching
+  // header name directly. N is 1-based.
+  const childMatch = header.match(/^child(?:ren)?_?(?:name_)?(\d+)$/);
+  if (childMatch){
+    const n = childMatch[1];
+    return p['child_name_' + n] || p['children_name_' + n] || p[header] || '';
+  }
+
+  switch (header){
+    case 'timestamp':      return new Date();
+    case 'name':           return p.name || '';
+    case 'guest2_name':    return p.guest2_name || '';
+    case 'mobile':         return p.mobile || '';
+    case 'attending':      return p.attending || '';
+    case 'adults':         return p.adults || '';
+    case 'children':       return p.children || '';
+    case 'message':        return p.message || '';
+    case 'invite_type':    return p.invite_type || '';
+    case 'user_agent':     return (e && e.parameter && e.parameter._ua) || '';
+    // Combined column (kept for back-compat if a Sheet still uses it).
+    case 'children_names': return p.children_names || '';
+    default:               return p[header] || '';
   }
 }
 
