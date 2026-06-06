@@ -1529,15 +1529,22 @@
   });
 
   // Touch swipe
-  let touchStartX = 0, touchStartY = 0;
+  // Swipes that begin on the form, a scrollable area, or any control must NOT
+  // turn the page — otherwise typing/scrolling on mobile flips the book.
+  const NO_SWIPE = 'input, textarea, select, button, a, label, .rsvp-form-page, .attendees-list-wrap';
+  let touchStartX = 0, touchStartY = 0, swipeBlocked = false;
   book.addEventListener('touchstart', (e) => {
     touchStartX = e.changedTouches[0].screenX;
     touchStartY = e.changedTouches[0].screenY;
+    swipeBlocked = !!(e.target.closest && e.target.closest(NO_SWIPE));
   }, { passive: true });
   book.addEventListener('touchend', (e) => {
+    if (swipeBlocked) return;
     const dx = e.changedTouches[0].screenX - touchStartX;
     const dy = e.changedTouches[0].screenY - touchStartY;
-    if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)){
+    // Require a deliberate, mostly-horizontal swipe (raised threshold +
+    // 2:1 horizontal/vertical ratio) to avoid stray page turns.
+    if (Math.abs(dx) > 70 && Math.abs(dx) > Math.abs(dy) * 2){
       if (dx < 0) stepNext();
       else stepPrev();
     }

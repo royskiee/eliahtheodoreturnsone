@@ -1626,6 +1626,13 @@ body{
   margin-bottom:.35rem;
   font-weight:500;
 }
+.optional-tag{
+  text-transform:none;
+  letter-spacing:.04em;
+  font-weight:400;
+  opacity:.6;
+  font-style:italic;
+}
 .rsvp-form .help{
   display:block;
   font-family:'Cormorant Garamond', serif;
@@ -1825,6 +1832,16 @@ body{
   font-style:italic;
   max-width:90%;
 }
+.rsvp-deadline{
+  margin-top:1.25rem;
+  font-family:'Cormorant Garamond', serif;
+  font-size:.95rem;
+  letter-spacing:.02em;
+  color:var(--honey);
+  border-top:1px solid rgba(0,0,0,.08);
+  padding-top:.9rem;
+}
+.rsvp-deadline strong{ color:var(--cocoa); font-weight:600; }
 
 /* =========================================================
    THE END PAGE

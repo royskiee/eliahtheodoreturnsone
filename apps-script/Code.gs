@@ -30,6 +30,12 @@
 const SHEET_ID    = '1WhJxo00HULJeItNXqGPHrO4wB8BonhEKjQJL2Rfy07A';
 const NOTIFY_EMAIL = 'royvincentb@gmail.com';
 
+// Guest-facing confirmation email settings.
+const SITE_URL    = 'https://elijahturnsone.com';
+const SENDER_NAME = "Elijah's 1st Birthday";
+const EVENT_WHEN  = 'Saturday, 26 July 2026 · 12:30 – 16:30';
+const EVENT_WHERE = 'State Hall & Alexandra Gardens, AX The Palace, Sliema, Malta';
+
 function doPost(e) {
   try {
     const p = (e && e.parameter) ? e.parameter : {};
@@ -93,6 +99,14 @@ function doPost(e) {
       replyTo: p.email || NOTIFY_EMAIL
     });
 
+    // Guest confirmation — only when ACCEPTING and a valid email was given
+    // (email is optional). Declines get no guest email.
+    const guestEmail = String(p.email || '').trim();
+    const accepting = String(p.attending || '').toLowerCase().startsWith('yes');
+    if (accepting && isValidEmail_(guestEmail)){
+      sendGuestConfirmation_(guestEmail, p.name || 'friend');
+    }
+
     return ContentService
       .createTextOutput(JSON.stringify({ ok: true }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -146,6 +160,78 @@ function doGet(e) {
   } catch (err) {
     return jsonOut({ ok: false, error: String(err), guests: [] }, callback);
   }
+}
+
+// Basic email sanity check (don't try to send to garbage).
+function isValidEmail_(s){
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim());
+}
+
+// Send the warm HTML thank-you to a guest who is attending.
+function sendGuestConfirmation_(to, name){
+  const firstName = String(name).trim().split(/\s+/)[0] || 'friend';
+  const subject = "🧸 Thank you for accepting Elijah's invite!";
+  const headline = "Thank you for accepting<br>Elijah's invite!";
+  const intro = "We're so delighted you'll be joining us to celebrate Elijah's very first birthday. It wouldn't be the same without you.";
+
+  const detailsBlock = `
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:8px 0 4px">
+              <tr><td style="padding:14px 18px;background:#F6F1EA;border-radius:12px">
+                <p style="margin:0 0 6px;font:600 12px/1.4 Arial,Helvetica,sans-serif;letter-spacing:.12em;text-transform:uppercase;color:#7A9DC4">When &amp; Where</p>
+                <p style="margin:0 0 4px;font:400 16px/1.5 Georgia,'Times New Roman',serif;color:#243B5C">${EVENT_WHEN}</p>
+                <p style="margin:0;font:400 14px/1.5 Georgia,'Times New Roman',serif;color:#4A5C7A">${EVENT_WHERE}</p>
+              </td></tr>
+            </table>`;
+
+  const htmlBody = `
+  <div style="margin:0;padding:0;background:#EFE7DC">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EFE7DC;padding:28px 12px">
+      <tr><td align="center">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#FFFDF9;border-radius:18px;overflow:hidden;box-shadow:0 6px 24px rgba(36,59,92,.12)">
+          <tr><td style="background:linear-gradient(135deg,#7A9DC4 0%,#243B5C 100%);padding:34px 28px;text-align:center">
+            <p style="margin:0 0 10px;font:600 12px/1 Arial,Helvetica,sans-serif;letter-spacing:.28em;text-transform:uppercase;color:#E8D5C4">Elijah Theodore · Turns One</p>
+            <h1 style="margin:0;font:400 28px/1.25 Georgia,'Times New Roman',serif;color:#FFFDF9">${headline}</h1>
+          </td></tr>
+          <tr><td style="padding:30px 30px 8px">
+            <p style="margin:0 0 16px;font:400 17px/1.6 Georgia,'Times New Roman',serif;color:#243B5C">Dear ${firstName},</p>
+            <p style="margin:0 0 18px;font:400 16px/1.7 Georgia,'Times New Roman',serif;color:#4A5C7A">${intro}</p>
+            ${detailsBlock}
+          </td></tr>
+          <tr><td style="padding:14px 30px 4px;text-align:center">
+            <a href="${SITE_URL}" style="display:inline-block;background:#7A9DC4;color:#FFFDF9;text-decoration:none;font:600 14px/1 Arial,Helvetica,sans-serif;letter-spacing:.06em;padding:14px 30px;border-radius:999px">Revisit the invitation →</a>
+          </td></tr>
+          <tr><td style="padding:14px 30px 30px;text-align:center">
+            <p style="margin:0;font:400 13px/1.6 Arial,Helvetica,sans-serif;color:#9A8E7E">Or visit <a href="${SITE_URL}" style="color:#7A9DC4;text-decoration:none">${SITE_URL.replace(/^https?:\/\//,'')}</a> anytime.</p>
+          </td></tr>
+          <tr><td style="background:#F6F1EA;padding:20px 30px;text-align:center">
+            <p style="margin:0;font:italic 400 15px/1.5 Georgia,'Times New Roman',serif;color:#243B5C">With love, from Elijah &amp; family 💙</p>
+          </td></tr>
+        </table>
+        <p style="margin:16px 0 0;font:400 11px/1.5 Arial,Helvetica,sans-serif;color:#9A8E7E">You're receiving this because you replied to Elijah's birthday invitation.</p>
+      </td></tr>
+    </table>
+  </div>`;
+
+  const plain = [
+    `Dear ${firstName},`,
+    '',
+    intro,
+    '',
+    `When & Where: ${EVENT_WHEN} — ${EVENT_WHERE}`,
+    '',
+    `Revisit the invitation: ${SITE_URL}`,
+    '',
+    'With love, from Elijah & family'
+  ].join('\n');
+
+  MailApp.sendEmail({
+    to: to,
+    subject: subject,
+    body: plain,
+    htmlBody: htmlBody,
+    name: SENDER_NAME,
+    replyTo: NOTIFY_EMAIL
+  });
 }
 
 function jsonOut(obj, callback) {
