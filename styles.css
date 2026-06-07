@@ -1940,8 +1940,12 @@ body{
   transition:opacity .35s ease;
 }
 .chapter-index.visible{
-  opacity:1;
+  opacity:.42;
   pointer-events:auto;
+}
+.chapter-index.visible:hover,
+.chapter-index.visible:focus-within{
+  opacity:1;
 }
 .chapter-index[hidden]{display:none}
 .chapter-index button{
